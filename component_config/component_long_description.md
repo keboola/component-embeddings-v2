@@ -1,0 +1,1 @@
+keboola.app-embeddings-v2 long description
