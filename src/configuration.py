@@ -127,7 +127,8 @@ class VectorDBConfig(BaseModel):
 
         for db_type, settings in settings_map.items():
             if db_type != self.db_type and settings is not None:
-                raise ValueError(f"{db_type.value}_settings should not be provided when db_type is {self.db_type.value}")
+                raise ValueError(
+                    f"{db_type.value}_settings should not be provided when db_type is {self.db_type.value}")
 
         return self
 

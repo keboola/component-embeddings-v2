@@ -2,4 +2,4 @@
 from .embedding_manager import EmbeddingManager
 from .vector_store_manager import VectorStoreManager
 
-__all__ = ["EmbeddingManager", "VectorStoreManager"] 
+__all__ = ["EmbeddingManager", "VectorStoreManager"]

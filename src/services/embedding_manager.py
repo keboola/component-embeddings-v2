@@ -19,7 +19,7 @@ from keboola.component.exceptions import UserException
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from configuration import ComponentConfig
+from configuration import ComponentConfig # noqa
 
 # Type aliases
 TextChunk: TypeAlias = str
@@ -169,7 +169,7 @@ class EmbeddingManager:
         resp = None
         try:
             resp = self.embedding_model.embed_query("")
-            logging.info(f"Connection to embedding service successful")
+            logging.info("Connection to embedding service successful")
         except Exception as e:
             raise UserException(f"Failed to connect to embedding service: {str(e)} response: {resp}")
 

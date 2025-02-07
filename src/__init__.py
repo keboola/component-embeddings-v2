@@ -1,1 +1,0 @@
-"""Keboola Embeddings Component.""" 

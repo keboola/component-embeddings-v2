@@ -10,6 +10,8 @@ ADD --chmod=755 https://astral.sh/uv/0.5.29/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 # Add the uv binary to the PATH
 ENV PATH=/root/.local/bin:$PATH
+# Install the requirements
+RUN uv pip install flake8 --system
 
 # Install the component
 COPY /src /code/src/
@@ -20,7 +22,6 @@ COPY deploy.sh /code/deploy.sh
 COPY requirements.txt /code/requirements.txt
 
 # Install the requirements
-RUN uv pip install flake8 --system
 RUN uv pip install -r /code/requirements.txt --system
 
 WORKDIR /code/

@@ -7,8 +7,8 @@ from typing import Generator
 
 
 def read_input_table(
-    input_table_path: str,
-    text_column: str
+        input_table_path: str,
+        text_column: str
 ) -> Generator[str, None, None]:
     """Read input table and yield texts one by one."""
     with open(input_table_path, "r", encoding="utf-8") as csv_file:
@@ -21,10 +21,10 @@ def read_input_table(
 
 
 def save_embeddings_to_csv(
-    output_path: str,
-    texts: list[str],
-    embeddings: list[list[float]],
-    zip_output: bool = False
+        output_path: str,
+        texts: list[str],
+        embeddings: list[list[float]],
+        zip_output: bool = False
 ) -> None:
     """Save embeddings to CSV file."""
     if len(texts) != len(embeddings):
@@ -51,4 +51,4 @@ def save_embeddings_to_csv(
         zip_path = output_path + ".zip"
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
             zip_file.write(output_path, os.path.basename(output_path))
-        os.remove(output_path)  # Remove the original CSV file 
+        os.remove(output_path)  # Remove the original CSV file

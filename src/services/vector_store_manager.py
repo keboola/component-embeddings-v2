@@ -23,7 +23,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from configuration import ComponentConfig
+from configuration import ComponentConfig # noqa
 
 # Type aliases
 VectorData: TypeAlias = dict[str, str | list[float]]
