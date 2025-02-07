@@ -1,5 +1,6 @@
 """Service for handling embeddings through Langchain."""
 import asyncio
+import logging
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -167,7 +168,8 @@ class EmbeddingManager:
         """Test connection to the embedding service asynchronously."""
         resp = None
         try:
-            resp = self.embedding_model.embed_query("test")
+            resp = self.embedding_model.embed_query("")
+            logging.info(f"Connection to embedding service successful")
         except Exception as e:
             raise UserException(f"Failed to connect to embedding service: {str(e)} response: {resp}")
 

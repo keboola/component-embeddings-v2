@@ -23,6 +23,7 @@ class Component(ComponentBase):
         self.vector_store_manager = None
 
     def _initialize_services(self) -> None:
+        logging.info("Initializing services")
         """Initialize configuration and service managers."""
         self.config = ComponentConfig.model_validate(self.configuration.parameters)
         self.embedding_manager = EmbeddingManager(self.config)
@@ -32,11 +33,21 @@ class Component(ComponentBase):
                 self.config,
                 self.embedding_manager.embedding_model
             )
+            self._test_vector_store_connection(self.vector_store_manager)
+            logging.info("Vector store connection successful")
         logging.info("Services initialized")
+
+    @staticmethod
+    def _test_vector_store_connection(vector_store_manager: VectorStoreManager) -> None:
+        """Test connection to vector database."""
+        try:
+            asyncio.run(vector_store_manager.vector_store.aget_by_ids([]))
+        except Exception as e:
+            raise UserException(f"Failed to connect to vector database: {str(e)}")
 
     @sync_action("testVectorStoreConnection")
     def test_vector_store_connection(self) -> ValidationResult:
-        """Test connection to vector database."""
+        """Sync action to test connection to vector database."""
         try:
             # Load config
             self.config = ComponentConfig.model_validate(self.configuration.parameters)
@@ -75,7 +86,7 @@ class Component(ComponentBase):
             embedding_manager._initialize_embeddings()
             self._test_embedding_service_connection(embedding_manager)
 
-            return ValidationResult("Connection to embedding service successful.", MessageType.SUCCESS)
+            return ValidationResult("Embedding service connection successful.", MessageType.SUCCESS)
 
         except Exception as e:
             raise UserException(f"Failed to connect to embedding service: {str(e)}")
