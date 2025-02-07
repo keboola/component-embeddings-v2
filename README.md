@@ -1,7 +1,99 @@
-keboola.app-embeddings-v2
-=============
+# Keboola Embeddings Component V2
 
-Description
+This component generates embeddings from text data using various embedding providers and can store them in vector databases.
+
+## Component Initialization
+
+The component was initialized using the Keboola Python Component template:
+
+```bash
+cookiecutter https://github.com/keboola/cookiecutter-python-component
+```
+
+With the following configuration:
+- template_variant: GitHub
+- repository_url: https://github.com/keboola/component-embeddings-v2
+- component_name: keboola.app-embeddings-v2
+
+## Features
+
+- Multiple embedding providers support:
+  - OpenAI
+  - Cohere
+  - HuggingFace
+  - Azure OpenAI
+
+- Vector database integrations:
+  - Chroma
+  - PostgreSQL (pgvector)
+  - FAISS
+  - Pinecone
+
+- Advanced text processing:
+  - Configurable batch processing
+  - Text chunking with overlap
+  - Metadata handling
+
+## Configuration
+
+### Embedding Provider Configuration
+
+```json
+{
+  "embedding_provider": "openai",
+  "model_name": "text-embedding-3-small",
+  "provider_params": {
+    "#api_key": "your-api-key"
+  }
+}
+```
+
+### Input Configuration
+
+```json
+{
+  "input_table": {
+    "input_table_id": "your-table-id",
+    "text_column": "text",
+    "id_column": "id"
+  }
+}
+```
+
+### Vector Database Configuration (Optional)
+
+```json
+{
+  "vector_db": {
+    "db_type": "pgvector",
+    "connection_params": {
+      "connection_string": "postgresql://user:pass@host:5432/db",
+      "index_name": "embeddings"
+    }
+  }
+}
+```
+
+## Development
+
+1. Clone the repository:
+```bash
+git clone https://github.com/keboola/component-embeddings-v2
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Run tests:
+```bash
+python -m pytest
+```
+
+## License
+
+MIT
 
 **Table of Contents:**
 
