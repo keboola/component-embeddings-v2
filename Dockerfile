@@ -11,7 +11,7 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 # Add the uv binary to the PATH
 ENV PATH=/root/.local/bin:$PATH
 # Install the requirements
-RUN uv pip install flake8 --system
+RUN uv pip install flake8 --system --no-cache
 
 # Install the component
 COPY /src /code/src/
@@ -19,10 +19,11 @@ COPY /tests /code/tests/
 COPY /scripts /code/scripts/
 COPY flake8.cfg /code/flake8.cfg
 COPY deploy.sh /code/deploy.sh
-COPY requirements.txt /code/requirements.txt
+COPY pyproject.toml /code/pyproject.toml
+COPY uv.lock /code/uv.lock
 
 # Install the requirements
-RUN uv pip install -r /code/requirements.txt --system
+RUN uv pip install -r /code/pyproject.toml --system --no-cache
 
 WORKDIR /code/
 
