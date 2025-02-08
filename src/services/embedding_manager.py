@@ -19,7 +19,7 @@ from keboola.component.exceptions import UserException
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from configuration import ComponentConfig # noqa
+from configuration import ComponentConfig  # noqa
 
 # Type aliases
 TextChunk: TypeAlias = str

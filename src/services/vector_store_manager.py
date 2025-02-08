@@ -5,7 +5,6 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TypeAlias
 
-import pinecone
 from keboola.component.exceptions import UserException
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -23,7 +22,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from configuration import ComponentConfig # noqa
+from configuration import ComponentConfig  # noqa
 
 # Type aliases
 VectorData: TypeAlias = dict[str, str | list[float]]
