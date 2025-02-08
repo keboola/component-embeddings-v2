@@ -10,6 +10,7 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_postgres import PGVector
 from langchain_pinecone import Pinecone
+import pinecone
 from langchain_qdrant import QdrantVectorStore
 from langchain_redis import RedisVectorStore
 from langchain_milvus import Milvus
