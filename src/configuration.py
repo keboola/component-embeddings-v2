@@ -211,7 +211,7 @@ class HuggingFaceSettings(BaseModel):
 
 class GoogleVertexSettings(BaseModel):
     """Google Vertex AI settings."""
-    model_config = ConfigDict(populate_by_name=True,protected_namespaces=())
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
 
     project: str
     credentials: str = Field(validation_alias="#credentials")
