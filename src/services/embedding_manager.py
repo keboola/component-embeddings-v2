@@ -184,6 +184,6 @@ class EmbeddingManager:
             # Process chunks
             embeddings = await self._process_batch_async(all_chunks)
             return all_chunks, embeddings
-            
+
         except Exception as e:
             raise UserException(f"Failed to process texts: {str(e)}")
