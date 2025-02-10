@@ -2,7 +2,6 @@
 import logging
 import os
 import asyncio
-from itertools import islice
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
@@ -26,11 +25,78 @@ class Component(ComponentBase):
         """Initialize component services."""
         self.config = ComponentConfig.model_validate(self.configuration.parameters)
         self.embedding_manager = EmbeddingManager(self.config)
+        self._test_embedding_service_connection(self.embedding_manager)
         if self.config.vector_db:
             self.vector_store_manager = VectorStoreManager(
                 self.config,
                 self.embedding_manager.embedding_model
             )
+            self._test_vector_store_connection(self.vector_store_manager)
+            logging.info("Vector store connection successful")
+        logging.info("Services initialized")
+
+    @staticmethod
+    def _test_vector_store_connection(vector_store_manager: VectorStoreManager) -> None:
+        """Test connection to vector database."""
+        try:
+            asyncio.run(vector_store_manager.vector_store.aget_by_ids([]))
+        except Exception as e:
+            raise UserException(f"Failed to connect to vector database: {str(e)}")
+
+    @sync_action("testVectorStoreConnection")
+    def test_vector_store_connection(self) -> ValidationResult:
+        """Sync action to test connection to vector database."""
+        try:
+            # Load config
+            self.config = ComponentConfig.model_validate(self.configuration.parameters)
+
+            # Check if vector db is configured
+            if not self.config.vector_db:
+                raise UserException("Vector database configuration is missing")
+
+            # Try to initialize vector store
+            vector_store = VectorStoreManager(self.config, None)
+
+            vector_store._initialize_vector_store()
+
+            return ValidationResult("Connection to vector database successful.", MessageType.SUCCESS)
+
+        except Exception as e:
+            raise UserException(f"Failed to connect to vector database: {str(e)}")
+
+    @staticmethod
+    def _test_embedding_service_connection(embedding_manager: EmbeddingManager) -> None:
+        return embedding_manager.test_connection()
+
+    @sync_action("testEmbeddingServiceConnection")
+    def test_embedding_service_connection(self) -> ValidationResult:
+        """Test connection to embedding service."""
+        try:
+            # Load config
+            self.config = ComponentConfig.model_validate(self.configuration.parameters)
+
+            # Check if vector db is configured
+            if not self.config.embedding_settings:
+                raise UserException("Embedding service configuration is missing")
+
+            # Try to initialize vector store
+            embedding_manager = EmbeddingManager(self.config)
+            embedding_manager._initialize_embeddings()
+            self._test_embedding_service_connection(embedding_manager)
+
+            return ValidationResult("Embedding service connection successful.", MessageType.SUCCESS)
+
+        except Exception as e:
+            raise UserException(f"Failed to connect to embedding service: {str(e)}")
+
+    def _get_input_tables(self):
+        if not self.get_input_tables_definitions():
+            raise UserException("No input table specified. Please provide one input table in the input mapping!")
+
+        if len(self.get_input_tables_definitions()) > 1:
+            raise UserException("Only one input table is supported")
+
+        return self.get_input_tables_definitions()[0]
 
     def _read_input_data(self):
         """Read and validate input data."""
@@ -108,23 +174,14 @@ class Component(ComponentBase):
             logging.info(
                 "Embeddings stored in vector database total: " + str(len(self.vector_store_manager.stored_ids)))
 
-    def run(self):
-        """Main execution code."""
-        self._initialize_services()
-        asyncio.run(self._run_async())
-
     async def _run_async(self):
         text_generator = self._read_input_data()
         await self._process_all_data(text_generator)
 
-    def _get_input_tables(self):
-        if not self.get_input_tables_definitions():
-            raise UserException("No input table specified. Please provide one input table in the input mapping!")
-
-        if len(self.get_input_tables_definitions()) > 1:
-            raise UserException("Only one input table is supported")
-
-        return self.get_input_tables_definitions()[0]
+    def run(self):
+        """Main execution code."""
+        self._initialize_services()
+        asyncio.run(self._run_async())
 
 
 if __name__ == "__main__":
