@@ -30,7 +30,6 @@ VectorData: TypeAlias = dict[str, str | list[float]]
 VectorBatch: TypeAlias = list[VectorData]
 
 # Constants
-BATCH_SIZE = 100
 MAX_RETRIES = 3
 MIN_BACKOFF = 4
 MAX_BACKOFF = 10
@@ -47,8 +46,7 @@ class VectorStoreManager:
         self.semaphore = asyncio.Semaphore(5)  # Limit concurrent connections
         self.stored_ids = []
 
-        if config.vector_db:
-            self.vector_store = self._initialize_vector_store()
+        self.vector_store = self._initialize_vector_store()
 
     def _initialize_vector_store(self):
         """Initialize the vector store based on configuration."""
@@ -190,9 +188,10 @@ class VectorStoreManager:
             # Create LangChain documents with embeddings
             documents = self._create_documents(texts, embeddings)
 
-            # Process in batches
-            for i in range(0, len(documents), BATCH_SIZE):
-                batch = documents[i:i + BATCH_SIZE]
+            # Process in batches using configured batch size
+            batch_size = self.config.advanced_options.batch_size
+            for i in range(0, len(documents), batch_size):
+                batch = documents[i:i + batch_size]
 
                 match type(self.vector_store).__name__:
                     case "PGVector" | "RedisVectorStore" | "OpenSearchVectorSearch":

@@ -136,36 +136,17 @@ class EmbeddingManager:
             case _:
                 raise UserException(f"Unsupported embedding provider: {settings.provider_type}")
 
-    @staticmethod
-    def split_into_batches(texts: Sequence[str], batch_size: int) -> list[list[str]]:
-        """Split texts into batches."""
-        batch_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=batch_size,
-            chunk_overlap=0,
-            length_function=lambda _: 1,
-            separators=["\n"]
-        )
-
-        combined_text = "\n".join(texts)
-        batches = batch_splitter.split_text(combined_text)
-        return [batch.split("\n") for batch in batches]
-
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
-    async def _split_text_async(self, text: str) -> ChunkList:
-        """Split text into chunks asynchronously."""
+    def _split_text(self, text: str) -> ChunkList:
+        """Split text into chunks."""
+        if not self.text_splitter:
+            return [text]
         try:
-            return await asyncio.to_thread(
-                self.text_splitter.split_text,
-                text
-            )
+            return self.text_splitter.split_text(text)
         except Exception as e:
             raise UserException(f"Failed to split text: {str(e)}")
 
     def test_connection(self):
-        """Test connection to the embedding service asynchronously."""
+        """Test connection to the embedding service."""
         resp = None
         try:
             resp = self.embedding_model.embed_query("")
@@ -186,8 +167,7 @@ class EmbeddingManager:
                 else:
                     return await asyncio.to_thread(
                         self.embedding_model.embed_documents,
-                        batch,
-                        0
+                        batch
                     )
         except Exception as e:
             raise UserException(f"Failed to create embeddings: {str(e)}")
@@ -195,31 +175,15 @@ class EmbeddingManager:
     async def process_texts(self, texts: Sequence[str]) -> tuple[ChunkList, EmbeddingList]:
         """Process texts to create embeddings asynchronously."""
         try:
-            # Split texts into chunks asynchronously
-            chunks_lists = await asyncio.gather(
-                *(self._split_text_async(text) for text in texts)
-            )
+            # Split texts into chunks
+            all_chunks = []
+            for text in texts:
+                chunks = self._split_text(text)
+                all_chunks.extend(chunks)
 
-            # Flatten chunks using list comprehension
-            all_chunks = [chunk for chunks in chunks_lists for chunk in chunks]
-
-            # Process chunks in batches
-            batch_size = 50
-            batches = [
-                all_chunks[i:i + batch_size]
-                for i in range(0, len(all_chunks), batch_size)
-            ]
-
-            # Create embeddings for batches asynchronously
-            embeddings_lists = await asyncio.gather(
-                *(self._process_batch_async(batch) for batch in batches)
-            )
-
-            # Flatten embeddings using list comprehension
-            all_embeddings = [
-                embedding for embeddings in embeddings_lists for embedding in embeddings
-            ]
-
-            return all_chunks, all_embeddings
+            # Process chunks
+            embeddings = await self._process_batch_async(all_chunks)
+            return all_chunks, embeddings
+            
         except Exception as e:
             raise UserException(f"Failed to process texts: {str(e)}")

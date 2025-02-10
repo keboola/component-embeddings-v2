@@ -18,78 +18,19 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
-        self.config: ComponentConfig = None
+        self.config = None
         self.embedding_manager = None
         self.vector_store_manager = None
 
-    def _initialize_services(self) -> None:
-        logging.info("Initializing services")
-        """Initialize configuration and service managers."""
+    def _initialize_services(self):
+        """Initialize component services."""
         self.config = ComponentConfig.model_validate(self.configuration.parameters)
         self.embedding_manager = EmbeddingManager(self.config)
-        self._test_embedding_service_connection(self.embedding_manager)
-        if self.config.output_config.save_to_vectordb:
+        if self.config.vector_db:
             self.vector_store_manager = VectorStoreManager(
                 self.config,
                 self.embedding_manager.embedding_model
             )
-            self._test_vector_store_connection(self.vector_store_manager)
-            logging.info("Vector store connection successful")
-        logging.info("Services initialized")
-
-    @staticmethod
-    def _test_vector_store_connection(vector_store_manager: VectorStoreManager) -> None:
-        """Test connection to vector database."""
-        try:
-            asyncio.run(vector_store_manager.vector_store.aget_by_ids([]))
-        except Exception as e:
-            raise UserException(f"Failed to connect to vector database: {str(e)}")
-
-    @sync_action("testVectorStoreConnection")
-    def test_vector_store_connection(self) -> ValidationResult:
-        """Sync action to test connection to vector database."""
-        try:
-            # Load config
-            self.config = ComponentConfig.model_validate(self.configuration.parameters)
-
-            # Check if vector db is configured
-            if not self.config.vector_db:
-                raise UserException("Vector database configuration is missing")
-
-            # Try to initialize vector store
-            vector_store = VectorStoreManager(self.config, None)
-
-            vector_store._initialize_vector_store()
-
-            return ValidationResult("Connection to vector database successful.", MessageType.SUCCESS)
-
-        except Exception as e:
-            raise UserException(f"Failed to connect to vector database: {str(e)}")
-
-    @staticmethod
-    def _test_embedding_service_connection(embedding_manager: EmbeddingManager) -> None:
-        return embedding_manager.test_connection()
-
-    @sync_action("testEmbeddingServiceConnection")
-    def test_embedding_service_connection(self) -> ValidationResult:
-        """Test connection to embedding service."""
-        try:
-            # Load config
-            self.config = ComponentConfig.model_validate(self.configuration.parameters)
-
-            # Check if vector db is configured
-            if not self.config.embedding_settings:
-                raise UserException("Embedding service configuration is missing")
-
-            # Try to initialize vector store
-            embedding_manager = EmbeddingManager(self.config)
-            embedding_manager._initialize_embeddings()
-            self._test_embedding_service_connection(embedding_manager)
-
-            return ValidationResult("Embedding service connection successful.", MessageType.SUCCESS)
-
-        except Exception as e:
-            raise UserException(f"Failed to connect to embedding service: {str(e)}")
 
     def _read_input_data(self):
         """Read and validate input data."""
@@ -114,31 +55,33 @@ class Component(ComponentBase):
     async def _process_all_data(
             self,
             text_generator
-    ) -> tuple[list[str], list[list[float]]]:
+    ) -> None:
         """Process all input data in batches."""
-        all_texts = []
-        all_embeddings = []
         batch_size = self.config.advanced_options.batch_size
         logging.info(f"Processing data in batches of size {batch_size}")
-        while True:
-            # Get next batch of texts
-            batch_texts = list(islice(text_generator, batch_size))
-            if not batch_texts:
-                break
 
-            # Process batch
-            processed_texts, embeddings = await self._process_batch(batch_texts)
+        current_batch = []
+        processed_count = 0
 
-            all_texts.extend(processed_texts)
-            all_embeddings.extend(embeddings)
+        for text in text_generator:
+            current_batch.append(text)
 
-            # Save intermediate results if needed
-            if len(all_texts) >= 10000:  # Save every 10k records
-                await self._save_results(all_texts, all_embeddings)
-                all_texts = []
-                all_embeddings = []
+            if len(current_batch) >= batch_size:
+                # Process current batch
+                texts, embeddings = await self._process_batch(current_batch)
+                await self._save_results(texts, embeddings)
 
-        return all_texts, all_embeddings
+                processed_count += len(texts)
+                logging.info(f"Processed {processed_count} texts")
+
+                current_batch = []
+
+        # Process remaining texts
+        if current_batch:
+            texts, embeddings = await self._process_batch(current_batch)
+            await self._save_results(texts, embeddings)
+            processed_count += len(texts)
+            logging.info(f"Processed total of {processed_count} texts")
 
     async def _save_results(
             self,
@@ -146,9 +89,6 @@ class Component(ComponentBase):
             embeddings: list[list[float]]
     ) -> None:
         """Save results to file and/or vector database."""
-        # Save to CSV if configured
-        # TODO use keboola create_out_table_definition or create_out_table_definition_from_schema
-        # Add option to save in raw structure to zip
         if self.config.output_config.output_type == "csv":
             logging.info(f"Saving {len(texts)} embeddings to CSV")
             output_path = os.path.join(self.tables_out_path, "embeddings.csv")
@@ -156,10 +96,9 @@ class Component(ComponentBase):
                 output_path,
                 texts,
                 embeddings,
-                False  # zip_output is now controlled by output_type
+                False
             )
 
-        # Store in vector database if configured
         if self.config.output_config.save_to_vectordb and self.config.vector_db:
             logging.info(f"Storing {len(texts)} embeddings in vector database")
             await self.vector_store_manager.store_vectors(
@@ -171,20 +110,12 @@ class Component(ComponentBase):
 
     def run(self):
         """Main execution code."""
-        # Initialize services
         self._initialize_services()
-
         asyncio.run(self._run_async())
 
     async def _run_async(self):
-        # Read input data
         text_generator = self._read_input_data()
-
-        processed_texts, embeddings = await self._process_all_data(text_generator)
-
-        if processed_texts:
-            logging.info(f"Saving {len(processed_texts)} results")
-            await self._save_results(processed_texts, embeddings)
+        await self._process_all_data(text_generator)
 
     def _get_input_tables(self):
         if not self.get_input_tables_definitions():
