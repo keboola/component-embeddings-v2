@@ -39,7 +39,8 @@ class Component(ComponentBase):
                 self.config,
                 self.embedding_manager.embedding_model
             )
-            self._test_vector_store_connection(self.vector_store_manager)
+            # TODO PineconeVectorStore does not yet support get_by_ids.
+            # self._test_vector_store_connection(self.vector_store_manager)
             logging.info("Vector store connection successful")
         logging.info("Services initialized")
 
@@ -242,6 +243,7 @@ class Component(ComponentBase):
         self._prepare_tables()
 
         text_generator = self._read_input_table()
+        # TODO we need more metadata columns, dynamic number of columns
         await self._process_all_data(text_generator)
 
     def run(self):

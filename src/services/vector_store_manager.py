@@ -1,17 +1,22 @@
 """Vector store manager for handling different vector databases."""
 import asyncio
+import logging
 import sys
+import time
 from collections.abc import Sequence
 from pathlib import Path
+from sys import exception
 from typing import TypeAlias
 from datetime import datetime, timezone
 
 from keboola.component.exceptions import UserException
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import PGVector
-from langchain_pinecone import Pinecone
-import pinecone
+from langchain_pinecone import PineconeVectorStore
+
+from pinecone import Pinecone, ServerlessSpec
 from langchain_qdrant import QdrantVectorStore
 from langchain_redis import RedisVectorStore
 from langchain_milvus import Milvus
@@ -70,16 +75,14 @@ class VectorStoreManager:
             case "pinecone":
                 settings = db_config.pinecone_settings
 
-                pinecone.init(
-                    api_key=settings.api_key,
-                    environment=settings.environment
-                )
+                pc = Pinecone(api_key=settings.api_key)
+                index_name = settings.index_name
 
-                return Pinecone.from_existing_index(
-                    index_name=settings.index_name,
-                    embedding=self.embedding_model,
-                    namespace="keboola"
-                )
+                if index_name not in [index_info["name"] for index_info in pc.list_indexes()]:
+                    raise UserException(f"Index '{index_name}' not found in Pinecone.")
+
+                index = pc.Index(index_name)
+                return PineconeVectorStore(index=index, embedding=self.embedding_model)
 
             case "qdrant":
                 settings = db_config.qdrant_settings
