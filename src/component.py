@@ -19,6 +19,7 @@ CSV_TABLES_FIELDS = ["text", "metadata", EMBEDDING_RESULT_COLUMN_NAME]
 
 csv.field_size_limit(sys.maxsize)
 
+
 class Component(ComponentBase):
     """Main component class."""
 
