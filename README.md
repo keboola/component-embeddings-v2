@@ -1,74 +1,131 @@
 # Keboola Embeddings Component V2
 
-This component generates embeddings from text data using various embedding providers and can store them in vector databases.
-
-## Component Initialization
-
-The component was initialized using the Keboola Python Component template:
-
-```bash
-cookiecutter https://github.com/keboola/cookiecutter-python-component
-```
-
-With the following configuration:
-- template_variant: GitHub
-- repository_url: https://github.com/keboola/component-embeddings-v2
-- component_name: keboola.app-embeddings-v2
+A powerful component for generating and managing text embeddings in the Keboola Connection platform. This component supports multiple embedding providers and vector databases, making it a versatile solution for various AI and machine learning applications.
 
 ## Features
 
-- Multiple embedding providers support:
-  - OpenAI
-  - Cohere
-  - HuggingFace
-  - Azure OpenAI
+### Embedding Providers
+- **OpenAI**
+  - Latest models including text-embedding-3-small/large
+  - Legacy ada-002 support
+- **Azure OpenAI**
+  - Full Azure OpenAI API support
+  - Custom deployment configurations
+- **Cohere**
+  - English and multilingual models
+  - Light and standard versions
+- **HuggingFace Hub**
+  - Support for custom models
+  - Optimized for sentence-transformers
+- **Google Vertex AI**
+  - Native integration with Google Cloud
+  - Support for latest Vertex AI models
+- **AWS Bedrock**
+  - Amazon Titan models
+  - Cohere models via AWS
 
-- Vector database integrations:
-  - Chroma
-  - PostgreSQL (pgvector)
-  - FAISS
-  - Pinecone
+### Vector Database Support
+- **PostgreSQL (pgvector)**
+  - Native vector similarity search
+  - Efficient indexing and querying
+- **Pinecone**
+  - Managed vector database service
+  - High-performance similarity search
+- **Qdrant**
+  - Self-hosted or cloud options
+  - Advanced filtering capabilities
+- **Milvus**
+  - Scalable vector database
+  - Hybrid search support
+- **Redis**
+  - Vector similarity with Redis
+  - High-performance in-memory operations
+- **OpenSearch**
+  - Full-text and vector search
+  - AWS OpenSearch compatible
 
-- Advanced text processing:
-  - Configurable batch processing
-  - Text chunking with overlap
-  - Metadata handling
+### Advanced Features
+- **Batch Processing**
+  - Configurable batch sizes (1-1000)
+  - Optimized for performance
+- **Text Chunking**
+  - Multiple chunking strategies
+  - Configurable overlap
+  - Support for long documents
+- **Metadata Handling**
+  - Custom metadata storage
+  - Rich query capabilities
+- **Storage Options**
+  - Keboola Storage integration
+  - Vector database storage
+  - Dual storage support
 
-## Configuration
+## Usage
 
-### Embedding Provider Configuration
+### Basic Configuration
 
-```json
-{
-  "embedding_provider": "openai",
-  "model_name": "text-embedding-3-small",
-  "provider_params": {
-    "#api_key": "your-api-key"
-  }
-}
-```
+1. **Select Embedding Provider**
+   ```json
+   {
+     "embedding_settings": {
+       "provider_type": "openai",
+       "openai_settings": {
+         "model": "text-embedding-3-small",
+         "#api_key": "your-api-key"
+       }
+     }
+   }
+   ```
 
-### Input Configuration
+2. **Configure Input**
+   ```json
+   {
+     "text_column": "description",
+     "metadata_column": "id"
+   }
+   ```
 
-```json
-{
-  "input_table": {
-    "input_table_id": "your-table-id",
-    "text_column": "text",
-    "id_column": "id"
-  }
-}
-```
+3. **Set Output Options**
+   ```json
+   {
+     "output_config": {
+       "save_to_storage": true,
+       "save_to_vectordb": true
+     }
+   }
+   ```
 
-### Vector Database Configuration (Optional)
+### Vector Database Setup
 
+Example for PostgreSQL (pgvector):
 ```json
 {
   "vector_db": {
     "db_type": "pgvector",
-    "connection_params": {
-      "connection_string": "postgresql://user:pass@host:5432/db",
-      "index_name": "embeddings"
+    "pgvector_settings": {
+      "host": "your-host",
+      "port": 5432,
+      "database": "your-db",
+      "#username": "user",
+      "#password": "pass",
+      "table_name": "embeddings"
+    }
+  }
+}
+```
+
+### Advanced Configuration
+
+Enable text chunking:
+```json
+{
+  "advanced_options": {
+    "batch_size": 100,
+    "enable_chunking": true,
+    "chunking_settings": {
+      "chunk_size": 1000,
+      "chunk_overlap": 100,
+      "chunk_strategy": "paragraph"
     }
   }
 }
@@ -76,24 +133,74 @@ With the following configuration:
 
 ## Development
 
+### Prerequisites
+- Python 3.13+
+- Docker
+- Access to embedding service APIs
+- Vector database instance (if using)
+
+### Local Setup
+
 1. Clone the repository:
-```bash
-git clone https://github.com/keboola/component-embeddings-v2
-```
+   ```bash
+   git clone https://github.com/keboola/component-embeddings-v2
+   cd keboola.app_embeddings_v2
+   ```
 
 2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. Run tests:
+   ```bash
+   python -m pytest
+   ```
+
+### Docker Development
+
+Build and run the component:
 ```bash
-python -m pytest
+docker-compose build
+docker-compose run --rm dev
 ```
+
+Run tests in Docker:
+```bash
+docker-compose run --rm test
+```
+
+## Output
+
+The component produces two types of outputs:
+
+1. **Storage Tables** (if enabled)
+   - Text content
+   - Metadata
+   - Embedding vectors
+
+2. **Vector Database Records**
+   - Embeddings with metadata
+   - Queryable via vector similarity
+
+## Error Handling
+
+The component includes robust error handling for:
+- API rate limits
+- Connection issues
+- Invalid configurations
+- Data format problems
+
+## Performance Considerations
+
+- Use appropriate batch sizes for your use case
+- Enable chunking for long texts
+- Consider vector database performance characteristics
+- Monitor API usage and costs
 
 ## License
 
-MIT
+MIT Licensed. See LICENSE file for details.
 
 **Table of Contents:**
 

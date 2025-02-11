@@ -48,7 +48,7 @@ class PGVectorSettings(BaseModel):
     database: str
     username: str = Field(validation_alias="#username")
     password: str = Field(validation_alias="#password")
-    table_name: str = "embeddings"
+    collection_name: str = "keboola_embeddings"
 
 
 class PineconeSettings(BaseModel):
@@ -169,7 +169,7 @@ class OutputConfig(BaseModel):
     """Configuration for output handling."""
     model_config = ConfigDict(populate_by_name=True)
 
-    output_type: Literal["csv", "raw"]
+    save_to_storage: bool = True
     save_to_vectordb: bool = False
 
 
@@ -211,7 +211,7 @@ class HuggingFaceSettings(BaseModel):
 
 class GoogleVertexSettings(BaseModel):
     """Google Vertex AI settings."""
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
 
     project: str
     credentials: str = Field(validation_alias="#credentials")
@@ -226,7 +226,7 @@ class BedrockSettings(BaseModel):
     aws_access_key: str = Field(validation_alias="#aws_access_key")
     aws_secret_key: str = Field(validation_alias="#aws_secret_key")
     region: str
-    model_id: str
+    model_id: str = model_config.update(protected_namespaces=())
 
 
 class EmbeddingSettings(BaseModel):
@@ -263,13 +263,21 @@ class EmbeddingSettings(BaseModel):
         return self
 
 
+class Destination(BaseModel):
+    incremental_load: bool = Field(default=False)
+    output_table_name: str
+    primary_keys_array: list[str] = Field(default_factory=list)
+
+
 class ComponentConfig(BaseModel):
     """Main configuration for the embedding component."""
     model_config = ConfigDict(populate_by_name=True)
 
     text_column: str
+    metadata_column: str
     embedding_settings: EmbeddingSettings
     output_config: OutputConfig
+    destination: Destination
     vector_db: Optional[VectorDBConfig] = None
     advanced_options: AdvancedOptions = Field(default_factory=AdvancedOptions)
 
