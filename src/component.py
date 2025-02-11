@@ -103,7 +103,7 @@ class Component(ComponentBase):
 
         self.input_table_definition = self.get_input_tables_definitions()[0]
 
-        if self.config.output_config.output_type == "csv":
+        if self.config.output_config.save_to_storage:
             self._build_out_csv_table()
 
     def _build_out_csv_table(self):
@@ -202,7 +202,7 @@ class Component(ComponentBase):
     ) -> None:
         """Save results to file and/or vector database."""
         # Add option to save in raw structure to zip
-        if self.config.output_config.output_type == "csv":
+        if self.config.output_config.save_to_storage:
             logging.info(f"Saving {len(texts)} embeddings to CSV")
             self._save_embeddings_to_csv(
                 texts,
