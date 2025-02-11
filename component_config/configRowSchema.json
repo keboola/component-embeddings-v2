@@ -31,18 +31,17 @@
             "type": "object",
             "title": "Output Configuration",
             "propertyOrder": 300,
-            "required": [
-                "output_type"
-            ],
             "properties": {
                 "save_to_storage": {
                     "type": "boolean",
                     "title": "Save to Storage",
+                    "format": "checkbox",
                     "description": "Save Embeddings to Storage also",
                     "default": false
                 },
                 "save_to_vectordb": {
                     "type": "boolean",
+                    "format": "checkbox",
                     "title": "Save to Vector Database",
                     "description": "Store embeddings in a vector database",
                     "default": true
@@ -52,6 +51,7 @@
         "destination": {
             "title": "Destination",
             "type": "object",
+            "propertyOrder": 350,
             "required": [
                 "output_table_name",
                 "incremental_load",
@@ -346,6 +346,18 @@
                             "title": "Index Name",
                             "default": "embeddings"
                         }
+                    }
+                }
+            },
+            "test_connection": {
+                "type": "button",
+                "format": "sync-action",
+                "propertyOrder": 300,
+                "options": {
+                    "async": {
+                        "label": "Test Connection to Vector Store Database",
+                        "action": "testVectorStoreConnection",
+                        "cache": false
                     }
                 }
             }

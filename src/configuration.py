@@ -169,7 +169,7 @@ class OutputConfig(BaseModel):
     """Configuration for output handling."""
     model_config = ConfigDict(populate_by_name=True)
 
-    output_type: Literal["csv", "raw"]
+    save_to_storage: bool = True
     save_to_vectordb: bool = False
 
 
