@@ -2,6 +2,7 @@
 import csv
 import json
 import logging
+import sys
 from typing import Generator, Any
 import asyncio
 import os
@@ -15,6 +16,8 @@ from services import EmbeddingManager, VectorStoreManager
 
 EMBEDDING_RESULT_COLUMN_NAME = "embedding"
 CSV_TABLES_FIELDS = ["text", "metadata", EMBEDDING_RESULT_COLUMN_NAME]
+
+csv.field_size_limit(sys.maxsize)
 
 
 class Component(ComponentBase):

@@ -142,7 +142,7 @@
                         "database",
                         "#username",
                         "#password",
-                        "table_name"
+                        "collection_name"
                     ],
                     "options": {
                         "dependencies": {
@@ -175,10 +175,10 @@
                             "title": "Password",
                             "format": "password"
                         },
-                        "table_name": {
+                        "collection_name": {
                             "type": "string",
-                            "title": "Table Name",
-                            "default": "embeddings"
+                            "title": "Collection Name",
+                            "default": "keboola_embeddings"
                         }
                     }
                 },
@@ -347,17 +347,16 @@
                             "default": "embeddings"
                         }
                     }
-                }
-            },
-            "test_connection": {
-                "type": "button",
-                "format": "sync-action",
-                "propertyOrder": 300,
-                "options": {
-                    "async": {
-                        "label": "Test Connection to Vector Store Database",
-                        "action": "testVectorStoreConnection",
-                        "cache": false
+                },
+                "test_connection": {
+                    "type": "button",
+                    "format": "sync-action",
+                    "options": {
+                        "async": {
+                            "label": "Test Connection to Vector Store Database",
+                            "action": "testVectorStoreConnection",
+                            "cache": false
+                        }
                     }
                 }
             }
