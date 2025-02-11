@@ -172,18 +172,25 @@ class EmbeddingManager:
         except Exception as e:
             raise UserException(f"Failed to create embeddings: {str(e)}")
 
-    async def process_texts(self, texts: Sequence[str]) -> tuple[ChunkList, EmbeddingList]:
+    async def process_texts(
+            self,
+            texts: Sequence[str],
+            metadata: Sequence[str]
+    ) -> tuple[list[str], list[str], list[list[float]]]:
         """Process texts to create embeddings asynchronously."""
         try:
             # Split texts into chunks
             all_chunks = []
-            for text in texts:
+            all_metadata = []
+            for text, meta in zip(texts, metadata):
                 chunks = self._split_text(text)
                 all_chunks.extend(chunks)
+                # Duplicate metadata for each chunk from the original text
+                all_metadata.extend([meta] * len(chunks))
 
             # Process chunks
             embeddings = await self._process_batch_async(all_chunks)
-            return all_chunks, embeddings
+            return all_chunks, all_metadata, embeddings
 
         except Exception as e:
             raise UserException(f"Failed to process texts: {str(e)}")

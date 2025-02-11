@@ -4,6 +4,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TypeAlias
+from datetime import datetime, timezone
 
 from keboola.component.exceptions import UserException
 from langchain_core.documents import Document
@@ -62,7 +63,7 @@ class VectorStoreManager:
                 return PGVector(
                     connection=connection_string,
                     embeddings=self.embedding_model,
-                    collection_name=settings.table_name,
+                    collection_name=settings.collection_name,
                     async_mode=True
                 )
 
@@ -157,18 +158,23 @@ class VectorStoreManager:
                 raise UserException(f"Unsupported vector store type: {db_config.db_type}")
 
     @staticmethod
-    def _create_documents(texts: Sequence[str], embeddings: Sequence[Sequence[float]]) -> list[Document]:
+    def _create_documents(
+            texts: Sequence[str],
+            embeddings: Sequence[Sequence[float]],
+            metadata: Sequence[str]
+    ) -> list[Document]:
         """Create LangChain documents with embeddings."""
+        current_time = datetime.now(timezone.utc).isoformat()
         return [
             Document(
                 page_content=text,
                 metadata={
-                    "embedding": list(embedding),
                     "source": "keboola",
-                    "created_at": "now()"
+                    "created_at": current_time,
+                    "metadata": meta
                 }
             )
-            for text, embedding in zip(texts, embeddings)
+            for text, embedding, meta in zip(texts, embeddings, metadata)
         ]
 
     @retry(
@@ -178,7 +184,8 @@ class VectorStoreManager:
     async def store_vectors(
             self,
             texts: Sequence[str],
-            embeddings: Sequence[Sequence[float]]
+            embeddings: Sequence[Sequence[float]],
+            metadata: Sequence[str]
     ) -> None:
         """Store vectors in the vector store."""
         if not self.vector_store:
@@ -186,7 +193,7 @@ class VectorStoreManager:
 
         try:
             # Create LangChain documents with embeddings
-            documents = self._create_documents(texts, embeddings)
+            documents = self._create_documents(texts, embeddings, metadata)
 
             # Process in batches using configured batch size
             batch_size = self.config.advanced_options.batch_size

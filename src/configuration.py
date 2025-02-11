@@ -48,7 +48,7 @@ class PGVectorSettings(BaseModel):
     database: str
     username: str = Field(validation_alias="#username")
     password: str = Field(validation_alias="#password")
-    table_name: str = "embeddings"
+    collection_name: str = "keboola_embeddings"
 
 
 class PineconeSettings(BaseModel):
@@ -263,13 +263,21 @@ class EmbeddingSettings(BaseModel):
         return self
 
 
+class Destination(BaseModel):
+    incremental_load: bool = Field(default=False)
+    output_table_name: str
+    primary_keys_array: list[str] = Field(default_factory=list)
+
+
 class ComponentConfig(BaseModel):
     """Main configuration for the embedding component."""
     model_config = ConfigDict(populate_by_name=True)
 
     text_column: str
+    metadata_column: str
     embedding_settings: EmbeddingSettings
     output_config: OutputConfig
+    destination: Destination
     vector_db: Optional[VectorDBConfig] = None
     advanced_options: AdvancedOptions = Field(default_factory=AdvancedOptions)
 

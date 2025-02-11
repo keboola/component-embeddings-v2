@@ -1,7 +1,10 @@
 """Main component file for the embedding service."""
+import csv
+import json
 import logging
-import os
+from typing import Generator, Any
 import asyncio
+import os
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
@@ -9,7 +12,9 @@ from keboola.component.exceptions import UserException
 
 from configuration import ComponentConfig
 from services import EmbeddingManager, VectorStoreManager
-from utils import save_embeddings_to_csv, read_input_table
+
+EMBEDDING_RESULT_COLUMN_NAME = "embedding"
+CSV_TABLES_FIELDS = ["text", "metadata", EMBEDDING_RESULT_COLUMN_NAME]
 
 
 class Component(ComponentBase):
@@ -89,34 +94,71 @@ class Component(ComponentBase):
         except Exception as e:
             raise UserException(f"Failed to connect to embedding service: {str(e)}")
 
-    def _get_input_tables(self):
+    def _prepare_tables(self):
         if not self.get_input_tables_definitions():
             raise UserException("No input table specified. Please provide one input table in the input mapping!")
 
         if len(self.get_input_tables_definitions()) > 1:
             raise UserException("Only one input table is supported")
 
-        return self.get_input_tables_definitions()[0]
+        self.input_table_definition = self.get_input_tables_definitions()[0]
 
-    def _read_input_data(self):
-        """Read and validate input data."""
-        tables = self._get_input_tables()
+        if self.config.output_config.output_type == "csv":
+            self._build_out_csv_table()
 
-        input_table_path = tables.full_path
-        if not os.path.exists(input_table_path):
-            raise UserException(f"Input table not found: {input_table_path}")
+    def _build_out_csv_table(self):
+        destination_config = self.config.destination
 
-        return read_input_table(
-            input_table_path,
-            self.config.text_column
-        )
+        if not (out_table_name := destination_config.output_table_name):
+            out_table_name = f"app-embeddings-{self.environment_variables.config_row_id}.csv"
+        else:
+            out_table_name = f"{out_table_name}.csv"
+
+        primary_key = destination_config.primary_keys_array
+
+        incremental_load = destination_config.incremental_load
+        self.output_table_definition = self.create_out_table_definition(out_table_name,
+                                                                        primary_key=primary_key,
+                                                                        incremental=incremental_load)
+
+    def _save_embeddings_to_csv(
+            self,
+            texts: list[str],
+            metadata: list[str],
+            embeddings: list[list[float]]
+    ) -> None:
+        """Save embeddings to CSV file."""
+        if not (len(texts) == len(embeddings) == len(metadata)):
+            raise ValueError("Length mismatch between texts, metadata and embeddings")
+
+        # Write to CSV - append mode if file exists, write mode with header if not
+        file_exists = os.path.exists(self.output_table_definition.full_path)
+        mode = "a" if file_exists else "w"
+
+        with open(self.output_table_definition.full_path, mode, encoding="utf-8", newline="") as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=CSV_TABLES_FIELDS)
+
+            # Write header only for new file
+            if not file_exists:
+                writer.writeheader()
+                self.write_manifest(self.output_table_definition)
+
+            # Write rows
+            for text, meta, embedding in zip(texts, metadata, embeddings):
+                row = {
+                    "text": text,
+                    "metadata": meta,
+                    "embedding": json.dumps(embedding)
+                }
+                writer.writerow(row)
 
     async def _process_batch(
             self,
-            texts: list[str]
-    ) -> tuple[list[str], list[list[float]]]:
+            texts: list[str],
+            metadata: list[str]
+    ) -> tuple[list[str], list[str], list[list[float]]]:
         """Process a batch of texts and return chunks with their embeddings."""
-        return await self.embedding_manager.process_texts(texts)
+        return await self.embedding_manager.process_texts(texts, metadata)
 
     async def _process_all_data(
             self,
@@ -126,56 +168,77 @@ class Component(ComponentBase):
         batch_size = self.config.advanced_options.batch_size
         logging.info(f"Processing data in batches of size {batch_size}")
 
-        current_batch = []
+        current_batch_texts = []
+        current_batch_metadata = []
         processed_count = 0
 
-        for text in text_generator:
-            current_batch.append(text)
+        for text, metadata in text_generator:
+            current_batch_texts.append(text)
+            current_batch_metadata.append(metadata)
 
-            if len(current_batch) >= batch_size:
+            if len(current_batch_texts) >= batch_size:
                 # Process current batch
-                texts, embeddings = await self._process_batch(current_batch)
-                await self._save_results(texts, embeddings)
+                texts, metadata, embeddings = await self._process_batch(current_batch_texts, current_batch_metadata)
+                await self._save_results(texts, metadata, embeddings)
 
                 processed_count += len(texts)
                 logging.info(f"Processed {processed_count} texts")
 
-                current_batch = []
+                current_batch_texts = []
+                current_batch_metadata = []
 
         # Process remaining texts
-        if current_batch:
-            texts, embeddings = await self._process_batch(current_batch)
-            await self._save_results(texts, embeddings)
+        if current_batch_texts:
+            texts, metadata, embeddings = await self._process_batch(current_batch_texts, current_batch_metadata)
+            await self._save_results(texts, metadata, embeddings)
             processed_count += len(texts)
             logging.info(f"Processed total of {processed_count} texts")
 
     async def _save_results(
             self,
             texts: list[str],
+            metadata: list[str],
             embeddings: list[list[float]]
     ) -> None:
         """Save results to file and/or vector database."""
+        # Add option to save in raw structure to zip
         if self.config.output_config.output_type == "csv":
             logging.info(f"Saving {len(texts)} embeddings to CSV")
-            output_path = os.path.join(self.tables_out_path, "embeddings.csv")
-            save_embeddings_to_csv(
-                output_path,
+            self._save_embeddings_to_csv(
                 texts,
-                embeddings,
-                False
+                metadata,
+                embeddings
             )
 
         if self.config.output_config.save_to_vectordb and self.config.vector_db:
             logging.info(f"Storing {len(texts)} embeddings in vector database")
             await self.vector_store_manager.store_vectors(
                 texts,
-                embeddings
+                embeddings,
+                metadata
             )
             logging.info(
                 "Embeddings stored in vector database total: " + str(len(self.vector_store_manager.stored_ids)))
 
+    def _read_input_table(self) -> Generator[tuple[str | Any, str | Any], None, None]:
+        """Read input table and yield texts one by one."""
+
+        text_column = self.config.text_column
+        metadata_column = self.config.metadata_column
+        with open(self.input_table_definition.full_path, "r", encoding="utf-8") as csv_file:
+            reader = csv.DictReader(csv_file)
+            if text_column not in reader.fieldnames:
+                raise ValueError(f"Text column '{text_column}' not found in input table")
+            if metadata_column not in reader.fieldnames:
+                raise ValueError(f"Metadata column '{metadata_column}' not found in input table")
+
+            for row in reader:
+                yield row[text_column], row[metadata_column]
+
     async def _run_async(self):
-        text_generator = self._read_input_data()
+        self._prepare_tables()
+
+        text_generator = self._read_input_table()
         await self._process_all_data(text_generator)
 
     def run(self):
