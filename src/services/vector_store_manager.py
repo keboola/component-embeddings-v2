@@ -10,8 +10,9 @@ from keboola.component.exceptions import UserException
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_postgres import PGVector
-from langchain_pinecone import Pinecone
-import pinecone
+from langchain_pinecone import PineconeVectorStore
+
+from pinecone import Pinecone
 from langchain_qdrant import QdrantVectorStore
 from langchain_redis import RedisVectorStore
 from langchain_milvus import Milvus
@@ -70,16 +71,14 @@ class VectorStoreManager:
             case "pinecone":
                 settings = db_config.pinecone_settings
 
-                pinecone.init(
-                    api_key=settings.api_key,
-                    environment=settings.environment
-                )
+                pc = Pinecone(api_key=settings.api_key)
+                index_name = settings.index_name
 
-                return Pinecone.from_existing_index(
-                    index_name=settings.index_name,
-                    embedding=self.embedding_model,
-                    namespace="keboola"
-                )
+                if index_name not in [index_info["name"] for index_info in pc.list_indexes()]:
+                    raise UserException(f"Index '{index_name}' not found in Pinecone.")
+
+                index = pc.Index(index_name)
+                return PineconeVectorStore(index=index, embedding=self.embedding_model)
 
             case "qdrant":
                 settings = db_config.qdrant_settings
@@ -161,17 +160,25 @@ class VectorStoreManager:
     def _create_documents(
             texts: Sequence[str],
             embeddings: Sequence[Sequence[float]],
-            metadata: Sequence[str]
+            metadata: Sequence[dict]
     ) -> list[Document]:
-        """Create LangChain documents with embeddings."""
+        """Create LangChain documents with embeddings and metadata.
+        Args:
+            texts: Sequence of text content
+            embeddings: Sequence of embedding vectors
+            metadata: Sequence of metadata dictionaries
+        Returns:
+            List of Document objects with properly formatted metadata
+        """
         current_time = datetime.now(timezone.utc).isoformat()
+
         return [
             Document(
                 page_content=text,
                 metadata={
                     "source": "keboola",
                     "created_at": current_time,
-                    "metadata": meta
+                    **meta  # Unpack user metadata directly into root
                 }
             )
             for text, embedding, meta in zip(texts, embeddings, metadata)
@@ -185,7 +192,7 @@ class VectorStoreManager:
             self,
             texts: Sequence[str],
             embeddings: Sequence[Sequence[float]],
-            metadata: Sequence[str]
+            metadata: Sequence[dict]
     ) -> None:
         """Store vectors in the vector store."""
         if not self.vector_store:
