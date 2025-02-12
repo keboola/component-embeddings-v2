@@ -109,7 +109,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ${{ inputs.component_dir }}
+          context: .
           file: ${{ inputs.component_dir }}/Dockerfile
           tags: ${{ inputs.kbc_developerportal_app }}:${{ needs.check_version.outputs.image_tag }}
           outputs: type=docker,dest=/tmp/${{ inputs.kbc_developerportal_app }}.tar
