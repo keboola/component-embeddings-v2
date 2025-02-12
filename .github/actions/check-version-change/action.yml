@@ -22,13 +22,13 @@ runs:
       uses: tj-actions/changed-files@v41
       with:
         files: |
-          components/${{ inputs.component }}/Version
+          components/${{ inputs.component }}/VERSION
 
     - name: Check version change
       id: check
       shell: bash
       run: |
-        version_file="components/${{ inputs.component }}/Version"
+        version_file="components/${{ inputs.component }}/VERSION"
         
         # Check if Version file exists
         if [ ! -f "$version_file" ]; then
