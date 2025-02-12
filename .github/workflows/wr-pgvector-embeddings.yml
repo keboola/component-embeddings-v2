@@ -8,6 +8,8 @@ on:
       - 'components/_common/**'
       - '.github/workflows/**'
 
+concurrency: ci-${{ github.workflow }}-${{ github.ref }}
+
 jobs:
   ci:
     uses: ./.github/workflows/common-component-workflow.yml
