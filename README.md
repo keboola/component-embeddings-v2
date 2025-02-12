@@ -1,283 +1,121 @@
-# Keboola Embeddings Component V2
+# Keboola App Embeddings V2
 
-A powerful component for generating and managing text embeddings in the Keboola Connection platform. This component supports multiple embedding providers and vector databases, making it a versatile solution for various AI and machine learning applications.
+This monorepo contains multiple components that share common code base for embeddings functionality.
 
-## Features
+## Repository Structure
 
-### Embedding Providers
-- **OpenAI**
-  - Latest models including text-embedding-3-small/large
-  - Legacy ada-002 support
-- **Azure OpenAI**
-  - Full Azure OpenAI API support
-  - Custom deployment configurations
-- **Cohere**
-  - English and multilingual models
-  - Light and standard versions
-- **HuggingFace Hub**
-  - Support for custom models
-  - Optimized for sentence-transformers
-- **Google Vertex AI**
-  - Native integration with Google Cloud
-  - Support for latest Vertex AI models
-- **AWS Bedrock**
-  - Amazon Titan models
-  - Cohere models via AWS
-
-### Vector Database Support
-- **PostgreSQL (pgvector)**
-  - Native vector similarity search
-  - Efficient indexing and querying
-- **Pinecone**
-  - Managed vector database service
-  - High-performance similarity search
-- **Qdrant**
-  - Self-hosted or cloud options
-  - Advanced filtering capabilities
-- **Milvus**
-  - Scalable vector database
-  - Hybrid search support
-- **Redis**
-  - Vector similarity with Redis
-  - High-performance in-memory operations
-- **OpenSearch**
-  - Full-text and vector search
-  - AWS OpenSearch compatible
-
-### Advanced Features
-- **Batch Processing**
-  - Configurable batch sizes (1-1000)
-  - Optimized for performance
-- **Text Chunking**
-  - Multiple chunking strategies
-  - Configurable overlap
-  - Support for long documents
-- **Metadata Handling**
-  - Custom metadata storage
-  - Rich query capabilities
-- **Storage Options**
-  - Keboola Storage integration
-  - Vector database storage
-  - Dual storage support
-
-## Usage
-
-### Basic Configuration
-
-1. **Select Embedding Provider**
-   ```json
-   {
-     "embedding_settings": {
-       "provider_type": "openai",
-       "openai_settings": {
-         "model": "text-embedding-3-small",
-         "#api_key": "your-api-key"
-       }
-     }
-   }
-   ```
-
-2. **Configure Input**
-   ```json
-   {
-     "text_column": "description",
-     "metadata_column": "id"
-   }
-   ```
-
-3. **Set Output Options**
-   ```json
-   {
-     "output_config": {
-       "save_to_storage": true,
-       "save_to_vectordb": true
-     }
-   }
-   ```
-
-### Vector Database Setup
-
-Example for PostgreSQL (pgvector):
-```json
-{
-  "vector_db": {
-    "db_type": "pgvector",
-    "pgvector_settings": {
-      "host": "your-host",
-      "port": 5432,
-      "database": "your-db",
-      "#username": "user",
-      "#password": "pass",
-      "table_name": "embeddings"
-    }
-  }
-}
+```
+keboola.app_embeddings_v2/
+├── components/              # All components
+│   ├── _common/            # Shared code and configuration
+│   │   ├── src/           # Common source code
+│   │   ├── tests/        # Common tests
+│   │   └── ...
+│   ├── app-embeddings-v2/  # UI Application component
+│   └── wr-pgvector-embeddings/  # Writer component
+├── scripts/                # Shared scripts
+└── .github/                # GitHub workflows
 ```
 
-### Advanced Configuration
-
-Enable text chunking:
-```json
-{
-  "advanced_options": {
-    "batch_size": 100,
-    "enable_chunking": true,
-    "chunking_settings": {
-      "chunk_size": 1000,
-      "chunk_overlap": 100,
-      "chunk_strategy": "paragraph"
-    }
-  }
-}
-```
-
-## Development
+## Local Development
 
 ### Prerequisites
-- Python 3.13+
-- Docker
-- Access to embedding service APIs
-- Vector database instance (if using)
 
-### Local Setup
+- Docker
+- Docker Compose
+- Python 3.12+
+- Make (optional)
+
+### Setting Up Development Environment
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/keboola/component-embeddings-v2
-   cd keboola.app_embeddings_v2
-   ```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Run tests:
-   ```bash
-   python -m pytest
-   ```
-
-### Docker Development
-
-Build and run the component:
 ```bash
-docker-compose build
-docker-compose run --rm dev
-```
-
-Run tests in Docker:
-```bash
-docker-compose run --rm test
-```
-
-## Output
-
-The component produces two types of outputs:
-
-1. **Storage Tables** (if enabled)
-   - Text content
-   - Metadata
-   - Embedding vectors
-
-2. **Vector Database Records**
-   - Embeddings with metadata
-   - Queryable via vector similarity
-
-## Error Handling
-
-The component includes robust error handling for:
-- API rate limits
-- Connection issues
-- Invalid configurations
-- Data format problems
-
-## Performance Considerations
-
-- Use appropriate batch sizes for your use case
-- Enable chunking for long texts
-- Consider vector database performance characteristics
-- Monitor API usage and costs
-
-## License
-
-MIT Licensed. See LICENSE file for details.
-
-**Table of Contents:**
-
-[TOC]
-
-Functionality Notes
-===================
-
-Prerequisites
-=============
-
-Ensure you have the necessary API token, register the application, etc.
-
-Features
-========
-
-| **Feature**             | **Description**                               |
-|-------------------------|-----------------------------------------------|
-| Generic UI Form         | Dynamic UI form for easy configuration.       |
-| Row-Based Configuration | Allows structuring the configuration in rows. |
-| OAuth                   | OAuth authentication enabled.                 |
-| Incremental Loading     | Fetch data in new increments.                 |
-| Backfill Mode           | Supports seamless backfill setup.             |
-| Date Range Filter       | Specify the date range for data retrieval.    |
-
-Supported Endpoints
-===================
-
-If you need additional endpoints, please submit your request to
-[ideas.keboola.com](https://ideas.keboola.com/).
-
-Configuration
-=============
-
-Param 1
--------
-Details about parameter 1.
-
-Param 2
--------
-Details about parameter 2.
-
-Output
-======
-
-Provides a list of tables, foreign keys, and schema.
-
-Development
------------
-
-To customize the local data folder path, replace the `CUSTOM_FOLDER` placeholder with your desired path in the `docker-compose.yml` file:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    volumes:
-      - ./:/code
-      - ./CUSTOM_FOLDER:/data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Clone this repository, initialize the workspace, and run the component using the following
-commands:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-git clone https://github.com/keboola/component-embeddings-v2 keboola.app_embeddings_v2
+git clone git@github.com:keboola/app-embeddings-v2.git
 cd keboola.app_embeddings_v2
+```
+
+2. Create and activate a virtual environment (optional but recommended):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+```
+
+### Building and Testing Components
+
+Each component can be built and tested independently. Navigate to the component directory and use docker-compose
+commands.
+
+#### Writer Component (wr-pgvector-embeddings)
+
+```bash
+cd components/wr-pgvector-embeddings
+
+# Build the component
 docker-compose build
-docker-compose run --rm dev
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Run the test suite and perform lint checks using this command:
+# Run development environment
+docker-compose up dev
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Run tests
 docker-compose run --rm test
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
-Integration
-===========
+#### UI Application (app-embeddings-v2)
 
-For details about deployment and integration with Keboola, refer to the
-[deployment section of the developer
-documentation](https://developers.keboola.com/extend/component/deployment/).
+```bash
+cd components/app-embeddings-v2
+
+# Build the component
+docker-compose build
+
+# Run development environment
+docker-compose up dev
+
+# Run tests
+docker-compose run --rm test
+```
+
+### Development Notes
+
+- Common code is located in `components/_common/` and is shared between all components
+- Each component has its own:
+    - `component_config/` - Component specific configuration
+    - `Dockerfile` - Component build definition
+    - `docker-compose.yml` - Local development setup
+    - `Version` - Component version for CI/CD
+
+### Testing
+
+Each component can be tested independently:
+
+1. Unit tests:
+```bash
+cd components/<component-name>
+docker-compose run --rm test
+```
+
+2. Local development:
+
+```bash
+cd components/<component-name>
+docker-compose up dev
+```
+
+The test environment mounts:
+
+- Component specific configuration from `./component_config`
+- Common source code from `../_common/src`
+- Common tests from `../_common/tests` (for test service)
+
+### Adding a New Component
+
+1. Create a new directory in `components/`
+2. Copy the basic structure:
+    - `component_config/` - Component specific configuration
+    - `Dockerfile` - Based on common template
+    - `docker-compose.yml` - Based on common template
+    - `Version` - Start with version 1.0.0
+
+3. Update paths in Dockerfile and docker-compose.yml to use common code from `../_common` 

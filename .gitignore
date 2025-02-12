@@ -4,9 +4,10 @@ __pycache__/
 .idea
 .vscode
 .DS_Store
+.venv
 /example/.project
 /example/.pydevproject
 
 # kbc datafolder
-/data
-/venv
+/data/*
+/components/_common/data/

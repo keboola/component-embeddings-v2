@@ -1,0 +1,229 @@
+name: Component CI
+
+on:
+  workflow_call:
+    inputs:
+      component_dir:
+        required: false
+        type: string
+        default: "."
+        description: 'Component directory path (for monorepo)'
+      kbc_developerportal_app:
+        required: true
+        type: string
+        description: 'Component ID in Keboola'
+      kbc_developerportal_vendor:
+        required: true
+        type: string
+        description: 'Developer Portal vendor name'
+      kbc_test_project_configs:
+        required: false
+        type: string
+        default: ""
+        description: 'Test project configurations'
+    secrets:
+      DOCKERHUB_USER:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      KBC_DEVELOPERPORTAL_USERNAME:
+        required: true
+      KBC_DEVELOPERPORTAL_PASSWORD:
+        required: true
+      KBC_STORAGE_TOKEN:
+        required: true
+
+jobs:
+  check_version:
+    name: Check Version and Branch
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      has_version_change: ${{ steps.check.outputs.has_version_change }}
+      is_default_branch: ${{ steps.branch_check.outputs.is_default_branch }}
+      is_semantic_tag: ${{ steps.tag_check.outputs.is_semantic_tag }}
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
+      should_deploy: ${{ steps.deploy_check.outputs.should_deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check version change
+        id: check
+        uses: ./.github/actions/check-version-change
+        with:
+          component: ${{ inputs.component_dir }}
+
+      - name: Check if default branch
+        id: branch_check
+        run: |
+          if [ "${{ github.ref_name }}" = "${{ github.event.repository.default_branch }}" ]; then
+            echo "is_default_branch=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_default_branch=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if semantic tag
+        id: tag_check
+        run: |
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_semantic_tag=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_semantic_tag=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set image tag
+        id: set_tag
+        run: |
+          if [ "${{ steps.branch_check.outputs.is_default_branch }}" = "true" ] && \
+             [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
+             [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
+            echo "image_tag=${{ steps.check.outputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "image_tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if should deploy
+        id: deploy_check
+        run: |
+          if [ "${{ steps.branch_check.outputs.is_default_branch }}" = "true" ] && \
+             [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
+             [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    name: Docker Image Build
+    runs-on: ubuntu-latest
+    needs: [ check_version ]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ inputs.component_dir }}/Dockerfile
+          tags: ${{ inputs.kbc_developerportal_app }}:latest
+          outputs: type=docker,dest=/tmp/${{ inputs.kbc_developerportal_app }}.tar
+          build-args: |
+            KBC_DEVELOPERPORTAL_APP=${{ inputs.kbc_developerportal_app }}
+            KBC_DEVELOPERPORTAL_VENDOR=${{ inputs.kbc_developerportal_vendor }}
+            KBC_DEVELOPERPORTAL_USERNAME=${{ secrets.KBC_DEVELOPERPORTAL_USERNAME }}
+            KBC_DEVELOPERPORTAL_PASSWORD=${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.kbc_developerportal_app }}
+          path: /tmp/${{ inputs.kbc_developerportal_app }}.tar
+
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: [ check_version, build ]
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.kbc_developerportal_app }}
+          path: /tmp
+
+      - name: Load Image & Run Tests
+        run: |
+          docker load --input /tmp/${{ inputs.kbc_developerportal_app }}.tar
+          docker image ls -a
+          docker run ${{ inputs.kbc_developerportal_app }}:latest flake8 . --config=flake8.cfg
+          echo "Running unit-tests..."
+          docker run ${{ inputs.kbc_developerportal_app }}:latest python -m unittest discover
+
+  tests-kbc:
+    name: Run KBC Tests
+    needs: [ check_version, build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up environment variables
+        run: |
+          echo "KBC_TEST_PROJECT_CONFIGS=${KBC_TEST_PROJECT_CONFIGS}" >> $GITHUB_ENV
+          echo "KBC_STORAGE_TOKEN=${{ secrets.KBC_STORAGE_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Run KBC test jobs
+        if: env.KBC_TEST_PROJECT_CONFIGS != '' && env.KBC_STORAGE_TOKEN != ''
+        uses: keboola/action-run-configs-parallel@master
+        with:
+          token: ${{ secrets.KBC_STORAGE_TOKEN }}
+          componentId: ${{ inputs.kbc_developerportal_app }}
+          tag: ${{ needs.check_version.outputs.image_tag }}
+          configs: ${{ env.KBC_TEST_PROJECT_CONFIGS }}
+
+  push:
+    name: Docker Image Push
+    runs-on: ubuntu-latest
+    needs: [ check_version, tests, tests-kbc ]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.kbc_developerportal_app }}
+          path: /tmp
+
+      - name: Load Image
+        run: |
+          docker load --input /tmp/${{ inputs.kbc_developerportal_app }}.tar
+          docker image ls -a
+
+      - name: Docker login
+        run: docker login --username "${{ secrets.DOCKERHUB_USER }}" --password "${{ secrets.DOCKERHUB_TOKEN }}"
+
+      - name: Push image to ECR
+        uses: keboola/action-push-to-ecr@master
+        with:
+          vendor: ${{ inputs.kbc_developerportal_vendor }}
+          app_id: ${{ inputs.kbc_developerportal_app }}
+          username: ${{ secrets.KBC_DEVELOPERPORTAL_USERNAME }}
+          password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
+          tag: ${{ needs.check_version.outputs.image_tag }}
+          push_latest: ${{ needs.check_version.outputs.should_deploy }}
+          source_image: ${{ inputs.kbc_developerportal_app }}
+
+  deploy:
+    name: Deploy to KBC
+    needs: [ check_version, push ]
+    if: needs.check_version.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Developer Portal Tag
+        uses: keboola/action-set-tag-developer-portal@master
+        with:
+          vendor: ${{ inputs.kbc_developerportal_vendor }}
+          app_id: ${{ inputs.kbc_developerportal_app }}
+          username: ${{ secrets.KBC_DEVELOPERPORTAL_USERNAME }}
+          password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
+          tag: ${{ needs.check_version.outputs.image_tag }}
+
+  update_developer_portal_properties:
+    name: Developer Portal Properties Update
+    needs: [ check_version, push ]
+    if: needs.check_version.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Update developer portal properties
+        run: |
+          chmod +x ${{ inputs.component_dir }}/scripts/developer_portal/*.sh
+          ${{ inputs.component_dir }}/scripts/developer_portal/update_properties.sh 

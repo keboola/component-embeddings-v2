@@ -1,0 +1,26 @@
+# This workflow is used to build and deploy the wr-pgvector-embeddings component
+name: wr-pgvector-embeddings
+
+on:
+  push:
+    paths:
+      - 'components/wr-pgvector-embeddings/**'
+      - 'components/_common/**'
+      - '.github/workflows/**'
+
+concurrency: ci-${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  ci:
+    uses: ./.github/workflows/common-component-workflow.yml
+    with:
+      component_dir: ./components/wr-pgvector-embeddings
+      kbc_developerportal_app: keboola.wr-pgvector-embeddings
+      kbc_developerportal_vendor: keboola
+      kbc_test_project_configs: ""
+    secrets:
+      DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      KBC_DEVELOPERPORTAL_USERNAME: ${{ vars.KBC_DEVELOPERPORTAL_USERNAME }}
+      KBC_DEVELOPERPORTAL_PASSWORD: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
+      KBC_STORAGE_TOKEN: ${{ secrets.KBC_STORAGE_TOKEN }} 
