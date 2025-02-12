@@ -175,8 +175,8 @@ class EmbeddingManager:
     async def process_texts(
             self,
             texts: Sequence[str],
-            metadata: Sequence[str]
-    ) -> tuple[list[str], list[str], list[list[float]]]:
+            metadata: Sequence[dict]
+    ) -> tuple[list[str], list[dict], list[list[float]]]:
         """Process texts to create embeddings asynchronously."""
         try:
             # Split texts into chunks

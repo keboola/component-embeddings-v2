@@ -160,17 +160,27 @@ class VectorStoreManager:
     def _create_documents(
             texts: Sequence[str],
             embeddings: Sequence[Sequence[float]],
-            metadata: Sequence[str]
+            metadata: Sequence[dict]
     ) -> list[Document]:
-        """Create LangChain documents with embeddings."""
+        """Create LangChain documents with embeddings and metadata.
+        
+        Args:
+            texts: Sequence of text content
+            embeddings: Sequence of embedding vectors
+            metadata: Sequence of metadata dictionaries
+            
+        Returns:
+            List of Document objects with properly formatted metadata
+        """
         current_time = datetime.now(timezone.utc).isoformat()
+        
         return [
             Document(
                 page_content=text,
                 metadata={
                     "source": "keboola",
                     "created_at": current_time,
-                    "metadata": meta
+                    **meta  # Unpack user metadata directly into root
                 }
             )
             for text, embedding, meta in zip(texts, embeddings, metadata)
@@ -184,7 +194,7 @@ class VectorStoreManager:
             self,
             texts: Sequence[str],
             embeddings: Sequence[Sequence[float]],
-            metadata: Sequence[str]
+            metadata: Sequence[dict]
     ) -> None:
         """Store vectors in the vector store."""
         if not self.vector_store:
