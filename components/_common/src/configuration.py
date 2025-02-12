@@ -279,7 +279,7 @@ class ComponentConfig(BaseModel):
     metadata_columns: list[str]
     embedding_settings: EmbeddingSettings
     output_config: OutputConfig
-    destination: Destination
+    destination: Optional[Destination] = None
     vector_db: Optional[VectorDBConfig] = None
     advanced_options: AdvancedOptions = Field(default_factory=AdvancedOptions)
 
