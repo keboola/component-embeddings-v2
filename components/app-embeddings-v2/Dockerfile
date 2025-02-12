@@ -32,9 +32,6 @@ COPY components/_common/deploy.sh /code/deploy.sh
 COPY components/_common/pyproject.toml /code/pyproject.toml
 COPY components/_common/uv.lock /code/uv.lock
 
-# Copy component specific configuration
-COPY components/app-embeddings-v2/component_config /code/component_config/
-
 WORKDIR /code/
 
 CMD ["python", "-u", "/code/src/component.py"]
