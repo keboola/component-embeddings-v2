@@ -111,7 +111,7 @@ jobs:
         with:
           context: .
           file: ${{ inputs.component_dir }}/Dockerfile
-          tags: ${{ inputs.kbc_developerportal_app }}:${{ needs.check_version.outputs.image_tag }}
+          tags: ${{ inputs.kbc_developerportal_app }}:latest
           outputs: type=docker,dest=/tmp/${{ inputs.kbc_developerportal_app }}.tar
           build-args: |
             KBC_DEVELOPERPORTAL_APP=${{ inputs.kbc_developerportal_app }}
