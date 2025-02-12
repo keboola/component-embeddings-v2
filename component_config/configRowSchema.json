@@ -144,7 +144,7 @@
                         "host",
                         "port",
                         "database",
-                        "#username",
+                        "username",
                         "#password",
                         "collection_name"
                     ],
@@ -169,7 +169,7 @@
                             "title": "Database",
                             "description": "Database name"
                         },
-                        "#username": {
+                        "username": {
                             "type": "string",
                             "title": "Username",
                             "format": "password"
@@ -247,7 +247,7 @@
                     "required": [
                         "host",
                         "port",
-                        "#username",
+                        "username",
                         "#password"
                     ],
                     "options": {
@@ -266,7 +266,7 @@
                             "title": "Port",
                             "default": 19530
                         },
-                        "#username": {
+                        "username": {
                             "type": "string",
                             "title": "Username",
                             "format": "password"
@@ -315,7 +315,7 @@
                     "required": [
                         "host",
                         "port",
-                        "#username",
+                        "username",
                         "#password",
                         "index_name"
                     ],
@@ -335,7 +335,7 @@
                             "title": "Port",
                             "default": 9200
                         },
-                        "#username": {
+                        "username": {
                             "type": "string",
                             "title": "Username",
                             "format": "password"

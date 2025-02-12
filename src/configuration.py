@@ -46,7 +46,7 @@ class PGVectorSettings(BaseModel):
     host: str
     port: int = 5432
     database: str
-    username: str = Field(validation_alias="#username")
+    username: str
     password: str = Field(validation_alias="#password")
     collection_name: str = "keboola_embeddings"
 
@@ -74,7 +74,7 @@ class MilvusSettings(BaseModel):
 
     host: str
     port: int = 19530
-    username: str = Field(validation_alias="#username")
+    username: str
     password: str = Field(validation_alias="#password")
 
 
@@ -93,7 +93,7 @@ class OpenSearchSettings(BaseModel):
 
     host: str
     port: int = 9200
-    username: str = Field(validation_alias="#username")
+    username: str
     password: str = Field(validation_alias="#password")
     index_name: str = "embeddings"
 
