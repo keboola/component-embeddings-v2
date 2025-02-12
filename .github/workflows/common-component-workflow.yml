@@ -151,15 +151,20 @@ jobs:
     name: Run KBC Tests
     needs: [ check_version, build ]
     runs-on: ubuntu-latest
-    if: inputs.kbc_test_project_configs != ''
     steps:
+      - name: Set up environment variables
+        run: |
+          echo "KBC_TEST_PROJECT_CONFIGS=${KBC_TEST_PROJECT_CONFIGS}" >> $GITHUB_ENV
+          echo "KBC_STORAGE_TOKEN=${{ secrets.KBC_STORAGE_TOKEN }}" >> $GITHUB_ENV
+
       - name: Run KBC test jobs
+        if: env.KBC_TEST_PROJECT_CONFIGS != '' && env.KBC_STORAGE_TOKEN != ''
         uses: keboola/action-run-configs-parallel@master
         with:
           token: ${{ secrets.KBC_STORAGE_TOKEN }}
           componentId: ${{ inputs.kbc_developerportal_app }}
           tag: ${{ needs.check_version.outputs.image_tag }}
-          configs: ${{ inputs.kbc_test_project_configs }}
+          configs: ${{ env.KBC_TEST_PROJECT_CONFIGS }}
 
   push:
     name: Docker Image Push
