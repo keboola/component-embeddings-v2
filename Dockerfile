@@ -16,22 +16,39 @@ COPY pyproject.toml uv.lock /code/
 WORKDIR /code
 RUN uv pip install -r pyproject.toml --system --no-cache
 
-# Runtime stage
-FROM python:3.12-slim-bullseye AS runtime
+# Test stage
+FROM python:3.12-slim-bullseye AS tester
 
 # Install test tools
-RUN pip install --no-cache-dir flake8
+RUN pip install --no-cache-dir flake8 pytest
 
-# Copy only necessary files
+# Copy dependencies and test files
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY /src /code/src/
 COPY /tests /code/tests/
-COPY /scripts /code/scripts/
 COPY flake8.cfg /code/flake8.cfg
-COPY deploy.sh /code/deploy.sh
-COPY pyproject.toml /code/pyproject.toml
-COPY uv.lock /code/uv.lock
 
 WORKDIR /code/
+
+# Runtime stage (minimal)
+FROM python:3.12-slim-bullseye AS runtime
+
+# Create non-root user
+RUN useradd -m -U app && \
+    mkdir -p /code && \
+    chown -R app:app /code
+
+# Remove unnecessary files and clean up
+RUN apt-get update && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    find /usr/local/lib/python3.12 -name '__pycache__' -type d -exec rm -r {} +
+
+# Copy only runtime dependencies and source code
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY /src /code/src/
+
+WORKDIR /code/
+USER app
 
 CMD ["python", "-u", "/code/src/component.py"]
