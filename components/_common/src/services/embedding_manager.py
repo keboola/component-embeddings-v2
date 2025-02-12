@@ -177,10 +177,8 @@ class EmbeddingManager:
             texts: Sequence[str]
     ) -> list[list[float]]:
         """Process texts to create embeddings asynchronously.
-        
         Args:
             texts: Sequence of texts to embed
-            
         Returns:
             List of embedding vectors
         """

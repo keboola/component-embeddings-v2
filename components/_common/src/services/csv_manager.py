@@ -23,7 +23,6 @@ class CSVManager:
             ids: list[str] = None
     ) -> None:
         """Save embeddings to CSV file.
-        
         Args:
             texts: List of text content
             metadata: List of metadata dictionaries
@@ -72,13 +71,11 @@ class CSVManager:
             id_column: str = None
     ) -> Generator[tuple[str, dict, str | None], None, None]:
         """Read input table and yield texts with their metadata dictionary and optional ID.
-        
         Args:
             input_table_definition: Input table definition
             text_column: Name of the column containing text to embed
             metadata_columns: List of column names to include as metadata
             id_column: Optional name of the column containing unique identifiers
-            
         Returns:
             Generator yielding tuples of (text, metadata_dict, id)
         """

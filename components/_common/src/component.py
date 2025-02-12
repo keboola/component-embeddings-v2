@@ -74,11 +74,9 @@ class Component(ComponentBase):
     async def _process_batch(self, texts: list[str], metadata: list[dict]) \
             -> tuple[list[str], list[dict], list[list[float]]]:
         """Process a batch of texts.
-        
         Args:
             texts: List of text content to embed
             metadata: List of metadata dictionaries (passed through unchanged)
-            
         Returns:
             Tuple of (processed_texts, metadata, embeddings)
         """
@@ -112,7 +110,6 @@ class Component(ComponentBase):
             ids: list[str] = None
     ) -> None:
         """Save results to file and/or vector database.
-        
         Args:
             texts: List of text content
             metadata: List of metadata dictionaries
