@@ -10,7 +10,7 @@ on:
 
 jobs:
   ci:
-    uses: ./.github/workflows/templates/component-workflow.yml
+    uses: ./.github/workflows/_common-component-workflow.yml
     with:
       component_dir: ./components/app-embeddings-v2
       kbc_developerportal_app: keboola.app-embeddings-v2
