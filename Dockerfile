@@ -20,7 +20,7 @@ RUN uv pip install -r pyproject.toml --system --no-cache --no-deps
 FROM python:3.12-slim-bullseye AS runtime
 
 # Install test and runtime tools
-RUN pip install --no-cache-dir flake8 pytest
+RUN pip install --no-cache-dir flake8 pytest python-dateutil freezegun
 
 # Copy only necessary files
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
