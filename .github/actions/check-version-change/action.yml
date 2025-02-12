@@ -1,0 +1,50 @@
+name: 'Check Version Change'
+description: 'Checks if component Version file has changed between commits'
+
+inputs:
+  component:
+    description: 'Component name to check'
+    required: true
+
+outputs:
+  has_version_change:
+    description: 'Whether the Version file has changed'
+    value: ${{ steps.check.outputs.has_version_change }}
+  version:
+    description: 'Current version from Version file'
+    value: ${{ steps.check.outputs.version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v41
+      with:
+        files: |
+          components/${{ inputs.component }}/Version
+
+    - name: Check version change
+      id: check
+      shell: bash
+      run: |
+        version_file="components/${{ inputs.component }}/Version"
+        
+        # Check if Version file exists
+        if [ ! -f "$version_file" ]; then
+          echo "Version file not found"
+          echo "has_version_change=false" >> $GITHUB_OUTPUT
+          echo "version=" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Get current version
+        current_version=$(cat "$version_file")
+        echo "version=$current_version" >> $GITHUB_OUTPUT
+        
+        # Check if Version file was changed
+        if [[ "${{ steps.changed-files.outputs.all_changed_files }}" == *"$version_file"* ]]; then
+          echo "has_version_change=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_version_change=false" >> $GITHUB_OUTPUT
+        fi 

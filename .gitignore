@@ -4,9 +4,11 @@ __pycache__/
 .idea
 .vscode
 .DS_Store
+.venv
 /example/.project
 /example/.pydevproject
 
 # kbc datafolder
-/data
-/venv
+/components/wr-pgvector-embeddings/data/
+/components/app-embeddings-v2/data/
+/components/_common/data/
