@@ -1,22 +1,18 @@
 """Vector store manager for handling different vector databases."""
 import asyncio
-import logging
 import sys
-import time
 from collections.abc import Sequence
 from pathlib import Path
-from sys import exception
 from typing import TypeAlias
 from datetime import datetime, timezone
 
 from keboola.component.exceptions import UserException
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
-from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import PGVector
 from langchain_pinecone import PineconeVectorStore
 
-from pinecone import Pinecone, ServerlessSpec
+from pinecone import Pinecone
 from langchain_qdrant import QdrantVectorStore
 from langchain_redis import RedisVectorStore
 from langchain_milvus import Milvus
