@@ -143,9 +143,9 @@ jobs:
         run: |
           docker load --input /tmp/${{ inputs.kbc_developerportal_app }}.tar
           docker image ls -a
-          docker run ${{ inputs.kbc_developerportal_app }}:${{ needs.check_version.outputs.image_tag }} flake8 . --config=flake8.cfg
+          docker run ${{ inputs.kbc_developerportal_app }}:latest flake8 . --config=flake8.cfg
           echo "Running unit-tests..."
-          docker run ${{ inputs.kbc_developerportal_app }}:${{ needs.check_version.outputs.image_tag }} python -m unittest discover
+          docker run ${{ inputs.kbc_developerportal_app }}:latest python -m unittest discover
 
   tests-kbc:
     name: Run KBC Tests
