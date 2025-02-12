@@ -28,7 +28,11 @@ runs:
       id: check
       shell: bash
       run: |
+        # Try both Version and VERSION filenames
         version_file="${{ inputs.component }}/VERSION"
+        if [ ! -f "$version_file" ]; then
+          version_file="${{ inputs.component }}/Version"
+        fi
         
         # Check if Version file exists
         if [ ! -f "$version_file" ]; then

@@ -97,6 +97,13 @@ jobs:
             echo "should_deploy=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Debug deployment conditions
+        run: |
+          echo "Is default branch: ${{ steps.branch_check.outputs.is_default_branch }}"
+          echo "Is semantic tag: ${{ steps.tag_check.outputs.is_semantic_tag }}"
+          echo "Has version change: ${{ steps.check.outputs.has_version_change }}"
+          echo "Should deploy: ${{ steps.deploy_check.outputs.should_deploy }}"
+
   build:
     name: Docker Image Build
     runs-on: ubuntu-latest
