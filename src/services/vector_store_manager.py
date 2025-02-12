@@ -173,7 +173,7 @@ class VectorStoreManager:
             List of Document objects with properly formatted metadata
         """
         current_time = datetime.now(timezone.utc).isoformat()
-        
+
         return [
             Document(
                 page_content=text,

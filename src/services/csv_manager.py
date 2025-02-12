@@ -4,6 +4,7 @@ import json
 import os
 from typing import Generator
 
+
 class CSVManager:
     def __init__(self, output_table_definition=None):
         self.output_table_definition = output_table_definition
@@ -23,7 +24,7 @@ class CSVManager:
         """Save embeddings to CSV file."""
         if not self.is_output_configured:
             raise ValueError("Output table definition not set")
-        
+
         if not (len(texts) == len(embeddings) == len(metadata)):
             raise ValueError("Length mismatch between texts, metadata and embeddings")
 
@@ -41,7 +42,7 @@ class CSVManager:
 
         with open(self.output_table_definition.full_path, mode, encoding="utf-8", newline="") as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=fields)
-            
+
             if not file_exists:
                 writer.writeheader()
 
@@ -50,7 +51,8 @@ class CSVManager:
                 row.update(meta)
                 writer.writerow(row)
 
-    def read_input_table(self, input_table_definition, text_column: str, metadata_columns: list[str]) -> Generator[tuple[str, dict], None, None]:
+    def read_input_table(self, input_table_definition, text_column: str, metadata_columns: list[str]) -> Generator[
+        tuple[str, dict], None, None]:
         """Read input table and yield texts with their metadata dictionary."""
         with open(input_table_definition.full_path, "r", encoding="utf-8") as csv_file:
             reader = csv.DictReader(csv_file)
@@ -63,4 +65,4 @@ class CSVManager:
 
             for row in reader:
                 metadata = {col: row[col] for col in metadata_columns} if metadata_columns else {}
-                yield row[text_column], metadata 
+                yield row[text_column], metadata

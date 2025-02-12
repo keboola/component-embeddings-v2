@@ -14,6 +14,7 @@ from services.csv_manager import CSVManager
 
 csv.field_size_limit(sys.maxsize)
 
+
 class Component(ComponentBase):
     """Main component class."""
 
@@ -29,14 +30,14 @@ class Component(ComponentBase):
         self.config = ComponentConfig.model_validate(self.configuration.parameters)
         self.embedding_manager = EmbeddingManager(self.config)
         self._test_embedding_service_connection(self.embedding_manager)
-        
+
         if self.config.vector_db:
             self.vector_store_manager = VectorStoreManager(
                 self.config,
                 self.embedding_manager.embedding_model
             )
             logging.info("Vector store connection successful")
-            
+
         logging.info("Services initialized")
 
     def _prepare_tables(self):
@@ -65,11 +66,12 @@ class Component(ComponentBase):
             primary_key=dest_config.primary_keys_array,
             incremental=dest_config.incremental_load
         )
-        
+
         if self.output_table_definition:
             self.write_manifest(self.output_table_definition)
 
-    async def _process_batch(self, texts: list[str], metadata: list[str]) -> tuple[list[str], list[dict], list[list[float]]]:
+    async def _process_batch(self, texts: list[str], metadata: list[str]) -> tuple[
+        list[str], list[dict], list[list[float]]]:
         """Process a batch of texts."""
         return await self.embedding_manager.process_texts(texts, metadata)
 
