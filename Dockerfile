@@ -1,23 +1,27 @@
-FROM python:3.12-slim
-ENV PYTHONIOENCODING=utf-8
+# Build stage
+FROM python:3.12-slim-bullseye AS builder
 
-# install gcc to be able to build packages - e.g. required by regex, dateparser, also required for pandas
-RUN apt-get update
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install the requirements
-RUN pip install flake8 uv
+# Install build tools
+RUN pip install --no-cache-dir uv
 
-# Install the component
+# Copy only requirements first to leverage Docker cache
+COPY pyproject.toml uv.lock /code/
+
+# Install dependencies
+WORKDIR /code
+RUN uv pip install -r pyproject.toml --system --no-cache --no-deps
+
+# Runtime stage
+FROM python:3.12-slim-bullseye
+
+# Copy only necessary files
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY /src /code/src/
-COPY /tests /code/tests/
-COPY /scripts /code/scripts/
-COPY flake8.cfg /code/flake8.cfg
-COPY deploy.sh /code/deploy.sh
-COPY pyproject.toml /code/pyproject.toml
-COPY uv.lock /code/uv.lock
-
-# Install the requirements
-RUN uv pip install -r /code/pyproject.toml --system --no-cache
 
 WORKDIR /code/
 
