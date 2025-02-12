@@ -1,5 +1,6 @@
 """Vector store manager for handling different vector databases."""
 import asyncio
+import logging
 import sys
 from collections.abc import Sequence
 from datetime import datetime, timezone
@@ -211,6 +212,7 @@ class VectorStoreManager:
                         # These support and benefit from async operations
                         async with self.semaphore:
                             ids = await self.vector_store.aadd_documents(batch)
+                            logging.debug(f"Async Stored {len(ids)} vectors")
                             self.stored_ids.extend(ids)
                     case _:
                         # Others are better with synchronous batch operations
@@ -218,7 +220,52 @@ class VectorStoreManager:
                             self.vector_store.add_documents,
                             batch
                         )
+                        logging.debug(f"Stored {len(ids)} vectors")
                         self.stored_ids.extend(ids)
 
         except Exception as e:
             raise UserException(f"Failed to store vectors: {str(e)}")
+
+    @retry(
+        stop=stop_after_attempt(MAX_RETRIES),
+        wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF)
+    )
+    async def upsert_vectors(
+        self,
+        texts: Sequence[str],
+        embeddings: Sequence[Sequence[float]],
+        metadata: Sequence[dict],
+        ids: Sequence[str]
+    ) -> None:
+        """Upsert vectors in the vector store (update if exists, insert if not).
+
+        Args:
+            texts: Sequence of text content to embed
+            embeddings: Sequence of pre-computed embedding vectors
+            metadata: Sequence of metadata dictionaries for each text
+            ids: Sequence of IDs for the vectors to upsert
+        """
+        if not self.vector_store:
+            return
+
+        try:
+            documents = self._create_documents(texts, embeddings, metadata)
+            batch_size = self.config.advanced_options.batch_size
+            
+            for i in range(0, len(documents), batch_size):
+                batch = documents[i:i + batch_size]
+                batch_ids = ids[i:i + batch_size]
+                
+                async with self.semaphore:
+                    # All vector stores support upsert via add_documents with ids
+                    if isinstance(self.vector_store, OpenSearchVectorSearch):
+                        # OpenSearch has special handling via native client
+                        await self.vector_store.aadd_documents(batch)
+                    else:
+                        # For other vector stores use standard add_documents with ids
+                        await self.vector_store.aadd_documents(batch, ids=batch_ids)
+                        logging.debug(f"Upserted {len(batch)} vectors with IDs: {batch_ids}")
+                        self.stored_ids.extend(batch_ids)
+
+        except Exception as e:
+            raise UserException(f"Failed to upsert vectors: {str(e)}")

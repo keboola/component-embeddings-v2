@@ -275,6 +275,7 @@ class ComponentConfig(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     text_column: str
+    id_column: Optional[str] = None
     metadata_columns: list[str]
     embedding_settings: EmbeddingSettings
     output_config: OutputConfig

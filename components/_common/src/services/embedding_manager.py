@@ -174,23 +174,26 @@ class EmbeddingManager:
 
     async def process_texts(
             self,
-            texts: Sequence[str],
-            metadata: Sequence[dict]
-    ) -> tuple[list[str], list[dict], list[list[float]]]:
-        """Process texts to create embeddings asynchronously."""
+            texts: Sequence[str]
+    ) -> list[list[float]]:
+        """Process texts to create embeddings asynchronously.
+        
+        Args:
+            texts: Sequence of texts to embed
+            
+        Returns:
+            List of embedding vectors
+        """
         try:
             # Split texts into chunks
             all_chunks = []
-            all_metadata = []
-            for text, meta in zip(texts, metadata):
+            for text in texts:
                 chunks = self._split_text(text)
                 all_chunks.extend(chunks)
-                # Duplicate metadata for each chunk from the original text
-                all_metadata.extend([meta] * len(chunks))
 
             # Process chunks
             embeddings = await self._process_batch_async(all_chunks)
-            return all_chunks, all_metadata, embeddings
+            return embeddings
 
         except Exception as e:
             raise UserException(f"Failed to process texts: {str(e)}")

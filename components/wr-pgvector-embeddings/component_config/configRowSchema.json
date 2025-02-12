@@ -16,6 +16,17 @@
             "description": "Choose a column to embed data.",
             "propertyOrder": 1
         },
+        "id_column": {
+            "type": "string",
+            "title": "ID column name",
+            "watch": {
+                "columns": "_metadata_.table.columns"
+            },
+            "required": false,
+            "enumSource": "columns",
+            "description": "Choose a column to use as unique identifier for upserts.",
+            "propertyOrder": 2
+        },
         "metadata_columns": {
             "type": "array",
             "title": "Metadata Columns",
