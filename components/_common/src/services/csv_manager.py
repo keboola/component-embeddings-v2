@@ -66,10 +66,10 @@ class CSVManager:
 
     @staticmethod
     def read_input_table(
-        input_table_definition,
-        text_column: str,
-        metadata_columns: list[str],
-        id_column: str = None
+            input_table_definition,
+            text_column: str,
+            metadata_columns: list[str],
+            id_column: str = None
     ) -> Generator[tuple[str, dict, str | None], None, None]:
         """Read input table and yield texts with their metadata dictionary and optional ID.
         
@@ -90,7 +90,7 @@ class CSVManager:
             for col in metadata_columns:
                 if col not in reader.fieldnames:
                     raise ValueError(f"Metadata column '{col}' not found in input table")
-                    
+
             if id_column and id_column not in reader.fieldnames:
                 raise ValueError(f"ID column '{id_column}' not found in input table")
 

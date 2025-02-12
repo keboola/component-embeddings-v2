@@ -231,11 +231,11 @@ class VectorStoreManager:
         wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF)
     )
     async def upsert_vectors(
-        self,
-        texts: Sequence[str],
-        embeddings: Sequence[Sequence[float]],
-        metadata: Sequence[dict],
-        ids: Sequence[str]
+            self,
+            texts: Sequence[str],
+            embeddings: Sequence[Sequence[float]],
+            metadata: Sequence[dict],
+            ids: Sequence[str]
     ) -> None:
         """Upsert vectors in the vector store (update if exists, insert if not).
 
@@ -251,11 +251,11 @@ class VectorStoreManager:
         try:
             documents = self._create_documents(texts, embeddings, metadata)
             batch_size = self.config.advanced_options.batch_size
-            
+
             for i in range(0, len(documents), batch_size):
                 batch = documents[i:i + batch_size]
                 batch_ids = ids[i:i + batch_size]
-                
+
                 async with self.semaphore:
                     # All vector stores support upsert via add_documents with ids
                     if isinstance(self.vector_store, OpenSearchVectorSearch):

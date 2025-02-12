@@ -84,7 +84,7 @@ class Component(ComponentBase):
         """
         # Get embeddings
         embeddings = await self.embedding_manager.process_texts(texts)
-        
+
         # If chunking is enabled, we need to duplicate metadata for each chunk
         if self.config.advanced_options.enable_chunking:
             # Calculate how many chunks were created for each text
@@ -94,7 +94,7 @@ class Component(ComponentBase):
             for meta in metadata:
                 expanded_metadata.extend([meta] * chunks_per_text)
             metadata = expanded_metadata
-            
+
             # Create corresponding list of chunked texts
             chunked_texts = []
             for text in texts:
@@ -105,11 +105,11 @@ class Component(ComponentBase):
         return texts, metadata, embeddings
 
     async def _save_results(
-        self,
-        texts: list[str],
-        metadata: list[dict],
-        embeddings: list[list[float]],
-        ids: list[str] = None
+            self,
+            texts: list[str],
+            metadata: list[dict],
+            embeddings: list[list[float]],
+            ids: list[str] = None
     ) -> None:
         """Save results to file and/or vector database.
         
