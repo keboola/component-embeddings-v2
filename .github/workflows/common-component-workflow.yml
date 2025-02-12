@@ -81,7 +81,7 @@ jobs:
              [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
             echo "image_tag=${{ steps.check.outputs.version }}" >> $GITHUB_OUTPUT
           else
-            echo "image_tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "image_tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
           fi
 
       - name: Check if should deploy
