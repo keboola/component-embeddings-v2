@@ -70,8 +70,8 @@ class Component(ComponentBase):
         if self.output_table_definition:
             self.write_manifest(self.output_table_definition)
 
-    async def _process_batch(self, texts: list[str], metadata: list[str]) -> tuple[
-        list[str], list[dict], list[list[float]]]:
+    async def _process_batch(self, texts: list[str], metadata: list[str]) \
+            -> tuple[list[str], list[dict], list[list[float]]]:
         """Process a batch of texts."""
         return await self.embedding_manager.process_texts(texts, metadata)
 

@@ -51,8 +51,9 @@ class CSVManager:
                 row.update(meta)
                 writer.writerow(row)
 
-    def read_input_table(self, input_table_definition, text_column: str, metadata_columns: list[str]) -> Generator[
-        tuple[str, dict], None, None]:
+    @staticmethod
+    def read_input_table(input_table_definition, text_column: str, metadata_columns: list[str]) \
+            -> Generator[tuple[str, dict], None, None]:
         """Read input table and yield texts with their metadata dictionary."""
         with open(input_table_definition.full_path, "r", encoding="utf-8") as csv_file:
             reader = csv.DictReader(csv_file)

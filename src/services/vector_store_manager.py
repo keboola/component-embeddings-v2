@@ -163,12 +163,10 @@ class VectorStoreManager:
             metadata: Sequence[dict]
     ) -> list[Document]:
         """Create LangChain documents with embeddings and metadata.
-        
         Args:
             texts: Sequence of text content
             embeddings: Sequence of embedding vectors
             metadata: Sequence of metadata dictionaries
-            
         Returns:
             List of Document objects with properly formatted metadata
         """
