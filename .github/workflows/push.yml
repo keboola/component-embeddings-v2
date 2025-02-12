@@ -84,22 +84,30 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - uses: docker/build-push-action@v5
+      # Build the Docker image and save it as tar
+      - name: Build and save Docker image
+        uses: docker/build-push-action@v5
         with:
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           context: .
           file: ./Dockerfile
           tags: ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest
           outputs: type=docker,dest=/tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Upload artifact
+      # Compress the Docker image tar file to reduce artifact size
+      - name: Compress Docker image
+        run: gzip -f /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
+
+      # Upload the compressed image as an artifact
+      - name: Upload compressed artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.KBC_DEVELOPERPORTAL_APP }}
-          path: /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
+          path: /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar.gz
 
   tests:
     name: Run Tests
@@ -111,14 +119,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Download artifact
+      # Download the compressed artifact
+      - name: Download compressed artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           path: /tmp
 
-      - name: Load Image & Run Tests
+      # Decompress and load the Docker image
+      - name: Load Docker image
         run: |
+          gunzip -f /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar.gz
           docker load --input /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
           docker image ls -a
           docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest flake8 . --config=flake8.cfg
@@ -159,14 +170,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Download artifact
+      # Download and decompress the artifact
+      - name: Download compressed artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           path: /tmp
 
-      - name: Load Image & Run Tests
+      - name: Load Docker image
         run: |
+          gunzip -f /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar.gz
           docker load --input /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
           docker image ls -a
 
