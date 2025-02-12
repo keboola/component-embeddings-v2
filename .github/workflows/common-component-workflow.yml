@@ -63,6 +63,7 @@ jobs:
           else
             echo "is_default_branch=false" >> $GITHUB_OUTPUT
           fi
+          echo $is_default_branch
 
       - name: Check if semantic tag
         id: tag_check
@@ -72,6 +73,7 @@ jobs:
           else
             echo "is_semantic_tag=false" >> $GITHUB_OUTPUT
           fi
+          echo 
 
       - name: Set image tag
         id: set_tag
