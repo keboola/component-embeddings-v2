@@ -151,7 +151,7 @@ jobs:
     name: Run KBC Tests
     needs: [ check_version, build ]
     runs-on: ubuntu-latest
-    if: inputs.kbc_test_project_configs != '' && secrets.KBC_STORAGE_TOKEN != ''
+    if: inputs.kbc_test_project_configs != ''
     steps:
       - name: Run KBC test jobs
         uses: keboola/action-run-configs-parallel@master
@@ -181,7 +181,6 @@ jobs:
           docker image ls -a
 
       - name: Docker login
-        if: secrets.DOCKERHUB_TOKEN != ''
         run: docker login --username "${{ secrets.DOCKERHUB_USER }}" --password "${{ secrets.DOCKERHUB_TOKEN }}"
 
       - name: Push image to ECR
