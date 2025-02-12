@@ -10,7 +10,7 @@ on:
 
 jobs:
   ci:
-    uses: ./.github/workflows/_common-component-workflow.yml
+    uses: ./.github/workflows/common-component-workflow.yml
     with:
       component_dir: ./components/wr-pgvector-embeddings
       kbc_developerportal_app: keboola.wr-pgvector-embeddings
