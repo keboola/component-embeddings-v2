@@ -87,50 +87,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build test image and run tests
-      - name: Build and test
+      # Build the Docker image and save it as tar
+      - name: Build and save Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          target: tester
-          tags: ${{ env.KBC_DEVELOPERPORTAL_APP }}:test
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Run tests
-        run: |
-          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:test flake8 . --config=flake8.cfg
-          echo "Running unit-tests..."
-          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:test python -m unittest discover
-
-      # Build and save runtime image
-      - name: Build runtime image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          target: runtime
           tags: ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest
           outputs: type=docker,dest=/tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
           cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # Show image sizes for comparison
-      - name: Compare image sizes
-        run: |
-          docker load --input /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
-          echo "Runtime image size:"
-          docker images ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest --format "{{.Size}}"
-          echo "Test image size:"
-          docker images ${{ env.KBC_DEVELOPERPORTAL_APP }}:test --format "{{.Size}}"
+      # Compress the Docker image tar file to reduce artifact size
+      - name: Compress Docker image
+        run: gzip -f /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
 
-      # Upload the runtime image as an artifact
-      - name: Upload artifact
+      # Upload the compressed image as an artifact
+      - name: Upload compressed artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.KBC_DEVELOPERPORTAL_APP }}
-          path: /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
+          path: /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar.gz
 
   tests:
     name: Run Tests
@@ -142,20 +119,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Download the artifact
-      - name: Download artifact
+      # Download the compressed artifact
+      - name: Download compressed artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           path: /tmp
 
-      # Load and verify runtime image
+      # Decompress and load the Docker image
       - name: Load Docker image
         run: |
+          gunzip -f /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar.gz
           docker load --input /tmp/${{ env.KBC_DEVELOPERPORTAL_APP }}.tar
           docker image ls -a
-          # Just verify the runtime image can run
-          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest python -c "print('Runtime check OK')"
+          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest flake8 . --config=flake8.cfg
+          echo "Running unit-tests..."
+          docker run ${{ env.KBC_DEVELOPERPORTAL_APP }}:latest python -m unittest discover
 
   tests-kbc:
     name: Run KBC Tests
