@@ -29,8 +29,6 @@ COPY components/_common/tests /code/tests/
 COPY scripts /code/scripts/
 COPY components/_common/flake8.cfg /code/flake8.cfg
 COPY components/_common/deploy.sh /code/deploy.sh
-COPY components/_common/pyproject.toml /code/pyproject.toml
-COPY components/_common/uv.lock /code/uv.lock
 
 WORKDIR /code/
 
