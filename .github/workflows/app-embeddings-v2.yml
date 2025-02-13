@@ -7,7 +7,7 @@ on:
       - 'components/app-embeddings-v2/**'
       - 'components/_common/**'
       - '.github/workflows/**'
-      -
+
 concurrency: ci-${{ github.workflow }}-${{ github.ref }}
 
 jobs:
