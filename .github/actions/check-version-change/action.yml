@@ -36,10 +36,21 @@ runs:
         echo "Current version: $current_version"
         echo "version=$current_version" >> $GITHUB_OUTPUT
         
-        # Get all tags sorted by version
-        git fetch --tags --force
-        all_tags=$(git tag -l "v*" --sort=-v:refname)
-        echo "All tags found: $all_tags"
+        # Debug git info
+        echo "Git remotes:"
+        git remote -v
+        
+        # Ensure we have all tags
+        echo "Fetching all tags..."
+        git fetch --tags --force --unshallow || git fetch --tags --force
+        
+        # List all tags (without filter first)
+        echo "All available tags:"
+        git tag
+        
+        # Get all tags sorted by version (try both with and without v prefix)
+        all_tags=$(git tag -l "*[0-9].[0-9]*.[0-9]*" --sort=-v:refname)
+        echo "All matching tags found: $all_tags"
         
         # Get previous tag (second in the list)
         previous_tag=$(echo "$all_tags" | sed -n '2p')
