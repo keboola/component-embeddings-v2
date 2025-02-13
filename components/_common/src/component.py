@@ -56,6 +56,7 @@ class Component(ComponentBase):
 
         if self.config.output_config.save_to_storage:
             self._build_output_table()
+            self.csv_manager.output_table_definition = self.output_table_definition
 
     def _build_output_table(self) -> None:
         """Build output table definition with proper schema."""
