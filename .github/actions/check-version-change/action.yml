@@ -30,9 +30,13 @@ runs:
       run: |
         version_file="${{ inputs.component }}/VERSION"
         
+        # Debug výstup
+        echo "Checking version file: $version_file"
+        echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
+        
         # Check if Version file exists
         if [ ! -f "$version_file" ]; then
-          echo "Version file not found"
+          echo "Version file not found at $version_file"
           echo "has_version_change=false" >> $GITHUB_OUTPUT
           echo "version=" >> $GITHUB_OUTPUT
           exit 0
@@ -40,11 +44,18 @@ runs:
         
         # Get current version
         current_version=$(cat "$version_file")
+        echo "Current version: $current_version"
         echo "version=$current_version" >> $GITHUB_OUTPUT
         
-        # Check if Version file was changed
-        if [[ "${{ steps.changed-files.outputs.all_changed_files }}" == *"$version_file"* ]]; then
+        # If we're on a tag, always consider it a version change
+        if [[ "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "On version tag - marking as version change"
+          echo "has_version_change=true" >> $GITHUB_OUTPUT
+        # Otherwise check if VERSION file changed
+        elif [[ "${{ steps.changed-files.outputs.all_changed_files }}" == *"$version_file"* ]]; then
+          echo "VERSION file changed"
           echo "has_version_change=true" >> $GITHUB_OUTPUT
         else
+          echo "No version change detected"
           echo "has_version_change=false" >> $GITHUB_OUTPUT
         fi 
