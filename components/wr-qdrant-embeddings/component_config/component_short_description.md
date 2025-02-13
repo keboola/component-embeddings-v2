@@ -1,0 +1,1 @@
+keboola.wr-pgvector-embeddings short description
