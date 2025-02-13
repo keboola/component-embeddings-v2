@@ -1,1 +1,1 @@
-keboola.wr-pgvector-embeddings short description
+keboola.wr-qdrant-embeddings short description
