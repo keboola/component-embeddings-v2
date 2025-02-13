@@ -194,5 +194,6 @@ jobs:
           KBC_DEVELOPERPORTAL_VENDOR: ${{ inputs.kbc_developerportal_vendor }}
           KBC_DEVELOPERPORTAL_APP: ${{ inputs.kbc_developerportal_app }}
         run: |
-          chmod +x ${{ inputs.component_dir }}/scripts/developer_portal/*.sh
-          ${{ inputs.component_dir }}/scripts/developer_portal/update_properties.sh 
+          cd ${{ inputs.component_dir }}
+          chmod +x scripts/developer_portal/*.sh
+          scripts/developer_portal/update_properties.sh 
