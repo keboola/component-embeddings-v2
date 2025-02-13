@@ -58,11 +58,14 @@ jobs:
       - name: Check if default branch
         id: branch_check
         run: |
-          # Přidáme debug výstup
-          echo "Current ref: ${{ github.ref_name }}"
+          # Debug výstup
+          echo "Current ref: ${{ github.ref }}"
+          echo "Current ref_name: ${{ github.ref_name }}"
           echo "Default branch: ${{ github.event.repository.default_branch }}"
+          echo "Event name: ${{ github.event_name }}"
           
-          if [ "${{ github.ref }}" = "refs/heads/${{ github.event.repository.default_branch }}" ]; then
+          # Opravená kontrola - porovnáváme ref_name s default branch
+          if [ "${{ github.ref_name }}" = "${{ github.event.repository.default_branch }}" ]; then
             echo "is_default_branch=true" >> $GITHUB_OUTPUT
           else
             echo "is_default_branch=false" >> $GITHUB_OUTPUT
@@ -71,30 +74,30 @@ jobs:
       - name: Check if semantic tag
         id: tag_check
         run: |
-          # Přidáme debug výstup
+          # Debug výstup
           echo "Current ref: ${{ github.ref }}"
+          echo "Event type: ${{ github.event_name }}"
           
+          # Zjednodušená kontrola tagu
           if [[ "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "is_semantic_tag=true" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" =~ ^refs/heads/.*$ ]]; then
+          else
             # Pokud jsme na větvi, zkontrolujeme poslední tag
-            git fetch --tags
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-            if [[ "$LATEST_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            git fetch --tags --force
+            LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
+            echo "Latest found tag: $LATEST_TAG"
+            
+            if [[ -n "$LATEST_TAG" ]] && [[ "$LATEST_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               echo "is_semantic_tag=true" >> $GITHUB_OUTPUT
             else
               echo "is_semantic_tag=false" >> $GITHUB_OUTPUT
             fi
-          else
-            echo "is_semantic_tag=false" >> $GITHUB_OUTPUT
           fi
-          echo "Latest tag: $(git describe --tags --abbrev=0 2>/dev/null || echo 'no tags')"
 
       - name: Set image tag
         id: set_tag
         run: |
-          if [ "${{ steps.branch_check.outputs.is_default_branch }}" = "true" ] && \
-             [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
+          if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
              [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
             echo "image_tag=${{ steps.check.outputs.version }}" >> $GITHUB_OUTPUT
           else
@@ -104,11 +107,18 @@ jobs:
       - name: Check if should deploy
         id: deploy_check
         run: |
-          if [ "${{ steps.branch_check.outputs.is_default_branch }}" = "true" ] && \
-             [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
+          # Debug výstup pro všechny podmínky
+          echo "Checking deployment conditions:"
+          echo "1. Is default branch: ${{ steps.branch_check.outputs.is_default_branch }}"
+          echo "2. Is semantic tag: ${{ steps.tag_check.outputs.is_semantic_tag }}"
+          echo "3. Has version change: ${{ steps.check.outputs.has_version_change }}"
+          
+          if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
              [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
+            echo "All conditions met - should deploy"
             echo "should_deploy=true" >> $GITHUB_OUTPUT
           else
+            echo "Not all conditions met - should not deploy"
             echo "should_deploy=false" >> $GITHUB_OUTPUT
           fi
 
@@ -169,12 +179,6 @@ jobs:
           tag: ${{ needs.check_version.outputs.image_tag }}
           push_latest: ${{ needs.check_version.outputs.should_deploy }}
           source_image: ${{ inputs.kbc_developerportal_app }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ inputs.kbc_developerportal_app }}
-          path: /tmp/${{ inputs.kbc_developerportal_app }}.tar
 
   tests-kbc:
     name: Run KBC Tests
