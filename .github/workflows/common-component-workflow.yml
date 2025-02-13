@@ -196,4 +196,4 @@ jobs:
       - name: Update developer portal properties
         run: |
           chmod +x ${{ inputs.component_dir }}/scripts/developer_portal/*.sh
-          ${{ inputs.component_dir }}/scripts/developer_portal/update_properties.sh
+          ${{ inputs.component_dir }}/scripts/developer_portal/update_properties.sh 
