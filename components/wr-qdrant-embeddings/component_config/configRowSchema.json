@@ -1,0 +1,462 @@
+{
+    "type": "object",
+    "title": "Embeddings Row Configuration",
+    "required": [
+        "text_column"
+    ],
+    "properties": {
+        "id_column": {
+            "type": "string",
+            "title": "ID column name",
+            "watch": {
+                "columns": "_metadata_.table.columns"
+            },
+            "required": false,
+            "enumSource": "columns",
+            "description": "Choose a column to use as unique identifier for upserts. Column must be in a UUID format! https://docs.snowflake.com/en/sql-reference/functions/uuid_string",
+            "propertyOrder": 2
+        },
+        "vector_db": {
+            "type": "object",
+            "title": "Vector Database Destination Configuration",
+            "options": {
+                "dependencies": {
+                    "output_config": {
+                        "save_to_vectordb": true
+                    }
+                }
+            },
+            "required": [
+                "db_type"
+            ],
+            "properties": {
+                "db_type": {
+                    "enum": [
+                        "pgvector",
+                        "pinecone",
+                        "qdrant",
+                        "milvus",
+                        "redis",
+                        "opensearch"
+                    ],
+                    "type": "string",
+                    "title": "Database Type",
+                    "default": "qdrant",
+                    "options": {
+                        "hidden": true,
+                        "tooltip": "Choose where to store your embeddings"
+                    },
+                    "enumNames": [
+                        "PostgreSQL (pgvector)",
+                        "Pinecone",
+                        "Qdrant",
+                        "Milvus",
+                        "Redis",
+                        "OpenSearch"
+                    ],
+                    "description": "Select the vector database type"
+                },
+                "redis_settings": {
+                    "type": "object",
+                    "title": "Redis Settings",
+                    "options": {
+                        "dependencies": {
+                            "db_type": "redis"
+                        }
+                    },
+                    "required": [
+                        "host",
+                        "port",
+                        "#password"
+                    ],
+                    "properties": {
+                        "host": {
+                            "type": "string",
+                            "title": "Host",
+                            "description": "Redis server hostname"
+                        },
+                        "port": {
+                            "type": "integer",
+                            "title": "Port",
+                            "default": 6379
+                        },
+                        "#password": {
+                            "type": "string",
+                            "title": "Password",
+                            "format": "password"
+                        }
+                    }
+                },
+                "milvus_settings": {
+                    "type": "object",
+                    "title": "Milvus Settings",
+                    "options": {
+                        "dependencies": {
+                            "db_type": "milvus"
+                        }
+                    },
+                    "required": [
+                        "host",
+                        "port",
+                        "username",
+                        "#password"
+                    ],
+                    "properties": {
+                        "host": {
+                            "type": "string",
+                            "title": "Host",
+                            "description": "Milvus server hostname"
+                        },
+                        "port": {
+                            "type": "integer",
+                            "title": "Port",
+                            "default": 19530
+                        },
+                        "username": {
+                            "type": "string",
+                            "title": "Username",
+                            "format": "password"
+                        },
+                        "#password": {
+                            "type": "string",
+                            "title": "Password",
+                            "format": "password"
+                        }
+                    }
+                },
+                "qdrant_settings": {
+                    "type": "object",
+                    "title": "Qdrant Settings",
+                    "options": {
+                        "dependencies": {
+                            "db_type": "qdrant"
+                        }
+                    },
+                    "required": [
+                        "url",
+                        "#api_key"
+                    ],
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "title": "URL",
+                            "description": "Qdrant instance URL"
+                        },
+                        "#api_key": {
+                            "type": "string",
+                            "title": "API Key",
+                            "format": "password"
+                        },
+                        "collection_name": {
+                            "type": "string",
+                            "title": "Collection Name",
+                            "default": "keboola_embeddings"
+                        }
+                    }
+                },
+                "test_connection": {
+                    "type": "button",
+                    "format": "sync-action",
+                    "options": {
+                        "hidden": true,
+                        "async": {
+                            "cache": false,
+                            "label": "Test Connection to Vector Store Database",
+                            "action": "testVectorStoreConnection"
+                        }
+                    }
+                },
+                "pgvector_settings": {
+                    "type": "object",
+                    "title": "PostgreSQL Settings",
+                    "options": {
+                        "dependencies": {
+                            "db_type": "pgvector"
+                        }
+                    },
+                    "required": [
+                        "host",
+                        "port",
+                        "database",
+                        "username",
+                        "#password",
+                        "collection_name"
+                    ],
+                    "properties": {
+                        "host": {
+                            "type": "string",
+                            "title": "Host",
+                            "description": "PostgreSQL server hostname"
+                        },
+                        "port": {
+                            "type": "integer",
+                            "title": "Port",
+                            "default": 5432
+                        },
+                        "database": {
+                            "type": "string",
+                            "title": "Database",
+                            "description": "Database name"
+                        },
+                        "username": {
+                            "type": "string",
+                            "title": "Username",
+                            "format": "password"
+                        },
+                        "#password": {
+                            "type": "string",
+                            "title": "Password",
+                            "format": "password"
+                        },
+                        "collection_name": {
+                            "type": "string",
+                            "title": "Collection Name",
+                            "default": "keboola_embeddings"
+                        }
+                    }
+                },
+                "pinecone_settings": {
+                    "type": "object",
+                    "title": "Pinecone Settings",
+                    "options": {
+                        "dependencies": {
+                            "db_type": "pinecone"
+                        }
+                    },
+                    "required": [
+                        "#api_key",
+                        "environment",
+                        "index_name"
+                    ],
+                    "properties": {
+                        "#api_key": {
+                            "type": "string",
+                            "title": "API Key",
+                            "format": "password"
+                        },
+                        "index_name": {
+                            "type": "string",
+                            "title": "Index Name"
+                        },
+                        "environment": {
+                            "type": "string",
+                            "title": "Environment",
+                            "description": "Pinecone environment name"
+                        }
+                    }
+                },
+                "opensearch_settings": {
+                    "type": "object",
+                    "title": "OpenSearch Settings",
+                    "options": {
+                        "dependencies": {
+                            "db_type": "opensearch"
+                        }
+                    },
+                    "required": [
+                        "host",
+                        "port",
+                        "username",
+                        "#password",
+                        "index_name"
+                    ],
+                    "properties": {
+                        "host": {
+                            "type": "string",
+                            "title": "Host",
+                            "description": "OpenSearch server hostname"
+                        },
+                        "port": {
+                            "type": "integer",
+                            "title": "Port",
+                            "default": 9200
+                        },
+                        "username": {
+                            "type": "string",
+                            "title": "Username",
+                            "format": "password"
+                        },
+                        "#password": {
+                            "type": "string",
+                            "title": "Password",
+                            "format": "password"
+                        },
+                        "index_name": {
+                            "type": "string",
+                            "title": "Index Name",
+                            "default": "embeddings"
+                        }
+                    }
+                }
+            },
+            "propertyOrder": 400
+        },
+        "destination": {
+            "type": "object",
+            "title": "Destination",
+            "options": {
+                "dependencies": {
+                    "output_config": {
+                        "save_to_storage": true
+                    }
+                }
+            },
+            "required": [
+                "output_table_name",
+                "incremental_load",
+                "primary_keys_array"
+            ],
+            "properties": {
+                "incremental_load": {
+                    "type": "boolean",
+                    "title": "Incremental Load",
+                    "format": "checkbox",
+                    "description": "If incremental load is turned on, the table will be updated instead of rewritten. Tables with a primary key will have rows updated, tables without a primary key will have rows appended.",
+                    "propertyOrder": 110
+                },
+                "output_table_name": {
+                    "type": "string",
+                    "title": "Storage Table Name",
+                    "description": "Name of the table stored in Storage.",
+                    "propertyOrder": 100
+                },
+                "primary_keys_array": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "Primary Keys",
+                    "format": "select",
+                    "options": {
+                        "tags": true
+                    },
+                    "description": "You can enter multiple columns seperated by commas at once e.g., id, other_id. If a primary key is set, updates can be done on the table by selecting incremental loads. The primary key can consist of multiple columns. The primary key of an existing table cannot be changed.",
+                    "uniqueItems": true,
+                    "propertyOrder": 120
+                }
+            },
+            "propertyOrder": 350
+        },
+        "text_column": {
+            "type": "string",
+            "title": "Embed column name",
+            "watch": {
+                "columns": "_metadata_.table.columns"
+            },
+            "required": true,
+            "enumSource": "columns",
+            "description": "Choose a column to embed data.",
+            "propertyOrder": 1
+        },
+        "output_config": {
+            "type": "object",
+            "title": "Output Configuration",
+            "options": {
+                "hidden": true
+            },
+            "properties": {
+                "save_to_storage": {
+                    "type": "boolean",
+                    "title": "Save to Storage",
+                    "format": "checkbox",
+                    "default": false,
+                    "description": "Save Embeddings to Storage also"
+                },
+                "save_to_vectordb": {
+                    "type": "boolean",
+                    "title": "Save to Vector Database",
+                    "format": "checkbox",
+                    "default": true,
+                    "description": "Store embeddings in a vector database"
+                }
+            },
+            "propertyOrder": 300
+        },
+        "advanced_options": {
+            "type": "object",
+            "title": "Advanced Options",
+            "properties": {
+                "batch_size": {
+                    "type": "integer",
+                    "title": "Batch Size",
+                    "default": 100,
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "description": "Number of texts to process in one batch",
+                    "propertyOrder": 1
+                },
+                "enable_chunking": {
+                    "type": "boolean",
+                    "title": "Enable Text Chunking",
+                    "default": false,
+                    "description": "Split long texts into smaller chunks before embedding",
+                    "propertyOrder": 2
+                },
+                "chunking_settings": {
+                    "type": "object",
+                    "title": "Chunking Settings",
+                    "options": {
+                        "dependencies": {
+                            "enable_chunking": true
+                        }
+                    },
+                    "properties": {
+                        "chunk_size": {
+                            "type": "integer",
+                            "title": "Chunk Size",
+                            "default": 1000,
+                            "maximum": 8000,
+                            "minimum": 100,
+                            "description": "Maximum number of characters in each chunk"
+                        },
+                        "chunk_overlap": {
+                            "type": "integer",
+                            "title": "Chunk Overlap",
+                            "default": 100,
+                            "maximum": 1000,
+                            "minimum": 0,
+                            "description": "Number of characters to overlap between chunks"
+                        },
+                        "chunk_strategy": {
+                            "enum": [
+                                "character",
+                                "sentence",
+                                "word",
+                                "paragraph"
+                            ],
+                            "type": "string",
+                            "title": "Chunking Strategy",
+                            "default": "paragraph",
+                            "options": {
+                                "tooltip": "Paragraph is recommended for most use cases"
+                            },
+                            "description": "How to split the text into chunks"
+                        }
+                    },
+                    "propertyOrder": 3
+                }
+            },
+            "propertyOrder": 500
+        },
+        "metadata_columns": {
+            "items": {
+                "type": "string",
+                "title": "Column Name",
+                "watch": {
+                    "columns": "_metadata_.table.columns"
+                },
+                "enumSource": "columns"
+            },
+            "uniqueItems": true,
+            "format": "select",
+            "title": "Metadata Columns",
+            "propertyOrder": 1,
+            "type": "array",
+            "description": "Choose columns to save to the vector store database as metadata.",
+            "options": {
+                "tags": true
+            },
+            "required": false
+        }
+    }
+}

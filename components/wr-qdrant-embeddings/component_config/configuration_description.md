@@ -1,10 +1,11 @@
-# Keboola PGVector Embeddings Writer
+# Keboola QDrant Embeddings Writer
 
-This document describes how to configure the Keboola PGVector Embeddings Writer component.
+This document describes how to configure the Keboola QDrant Embeddings Writer component.
 
 ## Main Configuration
 
 The component configuration consists of two main parts:
+
 
 ## Embedding Settings
 
@@ -26,14 +27,15 @@ Choose from the following embedding providers:
 - **Text Column**: Column containing text to embed
 - **Metadata Columns**: Optional columns to store as metadata
 - **Id Column**: Optional columns to store as ID - **if it set the index will be updated**
-- 
+
+
 ### Vector Database Configuration
 
-**PostgreSQL (pgvector)**
+**QDrant**
 
-- Host, Port, Database
-- Username, Password
-- Table Name
+- Url
+- API Key
+
 
 ### Advanced Options
 

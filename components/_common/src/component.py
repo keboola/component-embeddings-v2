@@ -3,8 +3,10 @@ import asyncio
 import csv
 import logging
 import sys
+from collections import OrderedDict
 
 from keboola.component.base import ComponentBase, sync_action
+from keboola.component.dao import ColumnDefinition, DataType
 from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import ValidationResult, MessageType
 
@@ -53,19 +55,50 @@ class Component(ComponentBase):
         self.csv_manager = CSVManager()
 
         if self.config.output_config.save_to_storage:
-            self._build_out_csv_table()
+            self._build_output_table()
             self.csv_manager.output_table_definition = self.output_table_definition
 
-    def _build_out_csv_table(self):
-        """Configure output table."""
+    def _build_output_table(self) -> None:
+        """Build output table definition with proper schema."""
         dest_config = self.config.destination
         out_table_name = dest_config.output_table_name or f"embeddings-{self.environment_variables.config_row_id}"
         out_table_name = f"{out_table_name}.csv"
 
+        # Create schema for output table
+        output_schema = OrderedDict()
+
+        # Add ID column if configured
+        if self.config.id_column:
+            if self.config.id_column in self.input_table_definition.schema:
+                output_schema["id"] = self.input_table_definition.schema[self.config.id_column]
+
+        # Add text column
+        if self.config.text_column in self.input_table_definition.schema:
+            output_schema["text"] = self.input_table_definition.schema[self.config.text_column]
+
+        # Add metadata columns (sorted to match CSV order)
+        for col_name in sorted(self.config.metadata_columns):
+            if col_name in self.input_table_definition.schema:
+                output_schema[col_name] = self.input_table_definition.schema[col_name]
+
+        # Add embedding column with appropriate backend-specific type
+        output_schema["embedding"] = ColumnDefinition(
+            data_types={
+                "base": DataType(dtype="STRING"),
+                "snowflake": DataType(dtype="VECTOR(FLOAT,256)"),
+                "bigquery": DataType(dtype="ARRAY<FLOAT64>")
+            },
+            nullable=True,
+            primary_key=False,
+            description="Embedding vector",
+            metadata=None
+        )
+
         self.output_table_definition = self.create_out_table_definition(
-            out_table_name,
+            name=out_table_name,
             primary_key=dest_config.primary_keys_array,
-            incremental=dest_config.incremental_load
+            incremental=dest_config.incremental_load,
+            schema=output_schema
         )
 
         if self.output_table_definition:
