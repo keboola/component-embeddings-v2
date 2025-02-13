@@ -7,7 +7,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install build tools
-RUN pip install --no-cache-dir uv tree
+RUN pip install --no-cache-dir uv
 
 # Copy only requirements first to leverage Docker cache
 COPY components/_common/pyproject.toml components/_common/uv.lock /code/
@@ -20,13 +20,12 @@ RUN uv pip install -r pyproject.toml --system --no-cache
 FROM python:3.12-slim-bullseye AS runtime
 
 # Install test tools
-RUN pip install --no-cache-dir flake8 tree
+RUN pip install --no-cache-dir flake8
 
 # Copy only necessary files
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY components/_common/src /code/src/
 COPY components/_common/tests /code/tests/
-COPY scripts /code/scripts/
 COPY components/_common/flake8.cfg /code/flake8.cfg
 COPY components/_common/deploy.sh /code/deploy.sh
 
