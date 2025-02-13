@@ -6,15 +6,24 @@ This monorepo contains multiple components that share common code base for embed
 
 ```
 keboola.app_embeddings_v2/
-├── components/              # All components
-│   ├── _common/            # Shared code and configuration
-│   │   ├── src/           # Common source code
-│   │   ├── tests/        # Common tests
-│   │   └── ...
-│   ├── app-embeddings-v2/  # UI Application component
-│   └── wr-pgvector-embeddings/  # Writer component
-├── scripts/                # Shared scripts
-└── .github/                # GitHub workflows
+├── .github/                    # GitHub configuration
+│   └── workflows/             # CI/CD workflow definitions
+│       ├── common-component-workflow.yml  # Shared workflow steps
+│       ├── app-embeddings-v2.yml         # UI app specific workflow
+│       ├── wr-pgvector-embeddings.yml    # PGVector writer workflow
+│       └── wr-qdrant-embeddings.yml      # Qdrant writer workflow
+├── components/                # All components
+│   ├── _common/              # Shared code and configuration
+│   │   ├── src/             # Common source code
+│   │   │   ├── db/         # Database interfaces
+│   │   │   ├── embeddings/ # Embedding providers
+│   │   │   └── utils/     # Shared utilities
+│   │   └── tests/          # Common test utilities
+│   ├── app-embeddings-v2/   # UI Application component
+│   ├── wr-pgvector-embeddings/ # PostgreSQL writer
+│   └── wr-qdrant-embeddings/   # Qdrant writer
+├── .gitignore                # Git ignore rules
+└── LICENSE.md                # Project license
 ```
 
 ## Local Development
@@ -26,56 +35,6 @@ keboola.app_embeddings_v2/
 - Python 3.12+
 - Make (optional)
 
-### Setting Up Development Environment
-
-1. Clone the repository:
-
-```bash
-git clone git@github.com:keboola/app-embeddings-v2.git
-cd keboola.app_embeddings_v2
-```
-
-2. Create and activate a virtual environment (optional but recommended):
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
-```
-
-### Building and Testing Components
-
-Each component can be built and tested independently. Navigate to the component directory and use docker-compose
-commands.
-
-#### Writer Component (wr-pgvector-embeddings)
-
-```bash
-cd components/wr-pgvector-embeddings
-
-# Build the component
-docker-compose build
-
-# Run development environment
-docker-compose up dev
-
-# Run tests
-docker-compose run --rm test
-```
-
-#### UI Application (app-embeddings-v2)
-
-```bash
-cd components/app-embeddings-v2
-
-# Build the component
-docker-compose build
-
-# Run development environment
-docker-compose up dev
-
-# Run tests
-docker-compose run --rm test
-```
 
 ### Development Notes
 
@@ -86,36 +45,76 @@ docker-compose run --rm test
     - `docker-compose.yml` - Local development setup
     - `Version` - Component version for CI/CD
 
-### Testing
-
-Each component can be tested independently:
-
-1. Unit tests:
-```bash
-cd components/<component-name>
-docker-compose run --rm test
-```
-
-2. Local development:
-
-```bash
-cd components/<component-name>
-docker-compose up dev
-```
-
-The test environment mounts:
-
-- Component specific configuration from `./component_config`
-- Common source code from `../_common/src`
-- Common tests from `../_common/tests` (for test service)
 
 ### Adding a New Component
 
-1. Create a new directory in `components/`
-2. Copy the basic structure:
-    - `component_config/` - Component specific configuration
-    - `Dockerfile` - Based on common template
-    - `docker-compose.yml` - Based on common template
-    - `Version` - Start with version 1.0.0
+The easiest way is to copy an existing similar component (e.g., `wr-pgvector-embeddings`) and modify it:
 
-3. Update paths in Dockerfile and docker-compose.yml to use common code from `../_common` 
+1. **Copy the Component**
+   ```bash
+   cd components
+   cp -r wr-pgvector-embeddings your-component-name
+   cd your-component-name
+   ```
+
+2. **Modify Files**
+   
+   Required changes in files:
+
+   - `VERSION` - change to `0.0.1`
+   
+   - `docker-compose.yml` - update service names if using specific ones (e.g., if you have `pgvector-dev`, change to `your-component-dev`)
+   
+   - `component_config/` - update configuration files:
+     - `configSchema.json` - main component configuration schema
+     - `configRowSchema.json` - row configuration schema (if component supports row configuration)
+     - `configuration_description.md` - configuration documentation
+     - `component_short_description.md` - brief component description
+     - `component_long_description.md` - detailed component description
+
+3. **Add GitHub Workflow**
+   
+   Add new workflow file `.github/workflows/your-component-name.yml` - copy from another component and update the component name.
+
+## CI/CD Pipeline Structure
+
+The CI/CD pipeline is organized as follows:
+
+1. **Common Workflow (`common-component-workflow.yml`)**
+   - Shared steps for all components
+   - Handles building, testing, and deployment
+   - Manages version bumping and releases
+
+2. **Component-Specific Workflows**
+   - Triggered on changes to component files
+   - Use the common workflow with component-specific parameters
+   - Handle component-specific deployment needs
+
+### CI/CD Process
+
+1. **On Pull Request:**
+   - Builds component
+   - Runs tests
+   - Checks code style
+   - Validates configuration
+
+2. **On Merge to Main:**
+   - Builds component
+   - Runs tests
+   - Creates new version
+   - Deploys to staging
+   - Runs integration tests
+   - Deploys to production
+
+### Environment Variables
+
+Required environment variables for CI/CD:
+```
+KBC_DEVELOPERPORTAL_USERNAME=your-username
+KBC_DEVELOPERPORTAL_PASSWORD=your-password
+KBC_DEVELOPERPORTAL_VENDOR=ypur-vendor
+```
+
+## License
+
+MIT Licensed. See LICENSE file for details. 

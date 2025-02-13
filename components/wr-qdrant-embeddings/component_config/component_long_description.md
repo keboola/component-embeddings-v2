@@ -1,0 +1,1 @@
+keboola.wr-qdrantd-embeddings long description
