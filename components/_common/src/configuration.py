@@ -67,6 +67,7 @@ class QdrantSettings(BaseModel):
 
     url: str
     api_key: str = Field(validation_alias="#api_key")
+    collection_name: str = "keboola_embeddings"
 
 
 class MilvusSettings(BaseModel):

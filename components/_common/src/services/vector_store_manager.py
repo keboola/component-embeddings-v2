@@ -90,7 +90,7 @@ class VectorStoreManager:
                 )
                 return QdrantVectorStore(
                     client=client,
-                    collection_name="embeddings",
+                    collection_name=settings.collection_name,
                     embedding=self.embedding_model
                 )
 
