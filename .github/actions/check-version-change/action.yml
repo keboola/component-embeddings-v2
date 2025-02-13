@@ -36,17 +36,21 @@ runs:
         echo "Current version: $current_version"
         echo "version=$current_version" >> $GITHUB_OUTPUT
         
-        # Get the latest tag and its version
+        # Get all tags sorted by version
         git fetch --tags --force
-        latest_tag=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
+        all_tags=$(git tag -l "v*" --sort=-v:refname)
+        echo "All tags found: $all_tags"
         
-        if [ -n "$latest_tag" ]; then
-          echo "Latest tag: $latest_tag"
-          # Get version from the latest tag
-          git checkout $latest_tag 2>/dev/null
+        # Get previous tag (second in the list)
+        previous_tag=$(echo "$all_tags" | sed -n '2p')
+        
+        if [ -n "$previous_tag" ]; then
+          echo "Previous tag: $previous_tag"
+          # Get version from the previous tag
+          git checkout $previous_tag 2>/dev/null
           if [ -f "$version_file" ]; then
             tag_version=$(cat "$version_file")
-            echo "Version from latest tag: $tag_version"
+            echo "Version from previous tag: $tag_version"
             
             # Compare versions
             if [ "$current_version" != "$tag_version" ]; then
@@ -57,12 +61,12 @@ runs:
               echo "has_version_change=false" >> $GITHUB_OUTPUT
             fi
           else
-            echo "VERSION file not found in latest tag"
+            echo "VERSION file not found in previous tag"
             echo "has_version_change=true" >> $GITHUB_OUTPUT
           fi
           # Return to original branch
           git checkout - 2>/dev/null
         else
-          echo "No tags found - considering as version change"
+          echo "No previous tag found - considering as version change"
           echo "has_version_change=true" >> $GITHUB_OUTPUT
         fi 
