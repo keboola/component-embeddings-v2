@@ -2,7 +2,10 @@
 import csv
 import json
 import os
+from collections import OrderedDict
 from typing import Generator
+
+from keboola.component.dao import ColumnDefinition, DataType
 
 
 class CSVManager:
@@ -14,6 +17,60 @@ class CSVManager:
     def is_output_configured(self) -> bool:
         """Check if output is properly configured."""
         return self.output_table_definition is not None
+
+    def build_output_table(self,
+                           input_table_definition,
+                           config,
+                           environment_variables) -> None:
+        """Build output table definition with proper schema.
+        Args:
+            input_table_definition: Input table definition with schema
+            config: Component configuration
+            environment_variables: Environment variables for table name generation
+        """
+        dest_config = config.destination
+        out_table_name = dest_config.output_table_name or f"embeddings-{environment_variables.config_row_id}"
+        out_table_name = f"{out_table_name}.csv"
+
+        # Create schema for output table
+        output_schema = OrderedDict()
+
+        # Add ID column if configured
+        if config.id_column:
+            if config.id_column in input_table_definition.schema:
+                output_schema["id"] = input_table_definition.schema[config.id_column]
+
+        # Add text column
+        if config.text_column in input_table_definition.schema:
+            output_schema["text"] = input_table_definition.schema[config.text_column]
+
+        # Add metadata columns (sorted to match CSV order)
+        for col_name in sorted(config.metadata_columns):
+            if col_name in input_table_definition.schema:
+                output_schema[col_name] = input_table_definition.schema[col_name]
+
+        # Add embedding column with appropriate backend-specific type
+        output_schema["embedding"] = ColumnDefinition(
+            data_types={
+                "base": DataType(dtype="STRING"),
+                "snowflake": DataType(dtype="VECTOR(FLOAT, 256)"),
+                "bigquery": DataType(dtype="ARRAY<FLOAT64>")
+            },
+            nullable=True,
+            primary_key=False,
+            description="Embedding vector",
+            metadata=None
+        )
+
+        self.output_table_definition = input_table_definition.create_out_table_definition(
+            out_table_name,
+            primary_key=dest_config.primary_keys_array,
+            incremental=dest_config.incremental_load,
+            schema=output_schema
+        )
+
+        if self.output_table_definition:
+            input_table_definition.write_manifest(self.output_table_definition)
 
     def save_embeddings_to_csv(
             self,

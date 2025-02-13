@@ -53,23 +53,11 @@ class Component(ComponentBase):
         self.csv_manager = CSVManager()
 
         if self.config.output_config.save_to_storage:
-            self._build_out_csv_table()
-            self.csv_manager.output_table_definition = self.output_table_definition
-
-    def _build_out_csv_table(self):
-        """Configure output table."""
-        dest_config = self.config.destination
-        out_table_name = dest_config.output_table_name or f"embeddings-{self.environment_variables.config_row_id}"
-        out_table_name = f"{out_table_name}.csv"
-
-        self.output_table_definition = self.create_out_table_definition(
-            out_table_name,
-            primary_key=dest_config.primary_keys_array,
-            incremental=dest_config.incremental_load
-        )
-
-        if self.output_table_definition:
-            self.write_manifest(self.output_table_definition)
+            self.csv_manager.build_output_table(
+                self.input_table_definition,
+                self.config,
+                self.environment_variables
+            )
 
     async def _process_batch(self, texts: list[str], metadata: list[dict]) \
             -> tuple[list[str], list[dict], list[list[float]]]:
