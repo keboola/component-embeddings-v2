@@ -13,7 +13,7 @@
             },
             "required": false,
             "enumSource": "columns",
-            "description": "Choose a column to use as unique identifier for upserts.",
+            "description": "Choose a column to use as unique identifier for upserts. Column must be in a UUID format! https://docs.snowflake.com/en/sql-reference/functions/uuid_string",
             "propertyOrder": 2
         },
         "vector_db": {
@@ -146,6 +146,11 @@
                             "type": "string",
                             "title": "API Key",
                             "format": "password"
+                        },
+                        "collection_name": {
+                            "type": "string",
+                            "title": "Collection Name",
+                            "default": "keboola_embeddings"
                         }
                     }
                 },
