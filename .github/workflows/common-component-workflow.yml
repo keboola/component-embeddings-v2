@@ -77,10 +77,10 @@ jobs:
         run: |
           if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
              [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
-            # Pro semantický tag s novou verzí použijeme verzi z VERSION
+            # For semantic tag with new version, use version from VERSION file
             echo "image_tag=${{ steps.check.outputs.version }}" >> $GITHUB_OUTPUT
           else
-            # Pro ostatní případy použijeme název větve za posledním lomítkem
+            # For other cases, use branch name after last slash
             branch_name="${GITHUB_REF#refs/heads/}"
             branch_name="${branch_name#refs/tags/}"
             image_tag="${branch_name##*/}"
@@ -107,9 +107,35 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Python dependencies cache
+      - name: Set up Python cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/lib/python*/site-packages
+          key: ${{ runner.os }}-python-${{ hashFiles('**/requirements.txt', '**/setup.py', '**/Pipfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
+
+      # Enhanced Docker Buildx setup with caching
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug
+          driver-opts: |
+            image=moby/buildkit:latest
 
+      # Docker layers cache
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ hashFiles('**/Dockerfile', '**/requirements.txt', 'components/_common/**') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      # Enhanced build using cache
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -122,6 +148,25 @@ jobs:
             KBC_DEVELOPERPORTAL_VENDOR=${{ inputs.kbc_developerportal_vendor }}
             KBC_DEVELOPERPORTAL_USERNAME=${{ secrets.KBC_DEVELOPERPORTAL_USERNAME }}
             KBC_DEVELOPERPORTAL_PASSWORD=${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-contexts: |
+            common=components/_common
+
+      # Move cache for next run
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      # Test data and configuration cache
+      - name: Cache test data
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ inputs.component_dir }}/tests/data
+            ${{ inputs.component_dir }}/tests/fixtures
+          key: ${{ runner.os }}-test-data-${{ hashFiles('**/tests/**') }}
 
       - name: Load Image & Run Tests
         run: |
