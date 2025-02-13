@@ -40,7 +40,6 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
       has_version_change: ${{ steps.check.outputs.has_version_change }}
-      is_default_branch: ${{ steps.branch_check.outputs.is_default_branch }}
       is_semantic_tag: ${{ steps.tag_check.outputs.is_semantic_tag }}
       image_tag: ${{ steps.set_tag.outputs.image_tag }}
       should_deploy: ${{ steps.deploy_check.outputs.should_deploy }}
@@ -55,43 +54,22 @@ jobs:
         with:
           component: ${{ inputs.component_dir }}
 
-      - name: Check if default branch
-        id: branch_check
-        run: |
-          # Debug výstup
-          echo "Current ref: ${{ github.ref }}"
-          echo "Current ref_name: ${{ github.ref_name }}"
-          echo "Default branch: ${{ github.event.repository.default_branch }}"
-          echo "Event name: ${{ github.event_name }}"
-          
-          # Opravená kontrola - porovnáváme ref_name s default branch
-          if [ "${{ github.ref_name }}" = "${{ github.event.repository.default_branch }}" ]; then
-            echo "is_default_branch=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_default_branch=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Check if semantic tag
         id: tag_check
         run: |
-          # Debug výstup
-          echo "Current ref: ${{ github.ref }}"
-          echo "Event type: ${{ github.event_name }}"
+          # Get current branch/tag name
+          ref_name="${{ github.ref }}"
+          name="${ref_name#refs/tags/}"
+          name="${name#refs/heads/}"
+          echo "Current ref name: $name"
           
-          # Zjednodušená kontrola tagu
-          if [[ "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          # Check if semantic version
+          if echo "$name" | grep -qE '^([a-zA-Z0-9-]+-)?([0-9]+\.[0-9]+\.[0-9]+)$'; then
+            echo "Valid semantic version detected"
             echo "is_semantic_tag=true" >> $GITHUB_OUTPUT
           else
-            # Pokud jsme na větvi, zkontrolujeme poslední tag
-            git fetch --tags --force
-            LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
-            echo "Latest found tag: $LATEST_TAG"
-            
-            if [[ -n "$LATEST_TAG" ]] && [[ "$LATEST_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "is_semantic_tag=true" >> $GITHUB_OUTPUT
-            else
-              echo "is_semantic_tag=false" >> $GITHUB_OUTPUT
-            fi
+            echo "Not a semantic version"
+            echo "is_semantic_tag=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Set image tag
@@ -99,35 +77,27 @@ jobs:
         run: |
           if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
              [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
+            # Pro semantický tag s novou verzí použijeme verzi z VERSION
             echo "image_tag=${{ steps.check.outputs.version }}" >> $GITHUB_OUTPUT
           else
-            echo "image_tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+            # Pro ostatní případy použijeme název větve za posledním lomítkem
+            branch_name="${GITHUB_REF#refs/heads/}"
+            branch_name="${branch_name#refs/tags/}"
+            image_tag="${branch_name##*/}"
+            echo "image_tag=$image_tag" >> $GITHUB_OUTPUT
           fi
 
       - name: Check if should deploy
         id: deploy_check
         run: |
-          # Debug výstup pro všechny podmínky
-          echo "Checking deployment conditions:"
-          echo "1. Is default branch: ${{ steps.branch_check.outputs.is_default_branch }}"
-          echo "2. Is semantic tag: ${{ steps.tag_check.outputs.is_semantic_tag }}"
-          echo "3. Has version change: ${{ steps.check.outputs.has_version_change }}"
-          
           if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
              [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
-            echo "All conditions met - should deploy"
+            echo "Conditions met - will deploy"
             echo "should_deploy=true" >> $GITHUB_OUTPUT
           else
-            echo "Not all conditions met - should not deploy"
+            echo "Conditions not met - will not deploy"
             echo "should_deploy=false" >> $GITHUB_OUTPUT
           fi
-
-      - name: Debug deployment conditions
-        run: |
-          echo "Is default branch: ${{ steps.branch_check.outputs.is_default_branch }}"
-          echo "Is semantic tag: ${{ steps.tag_check.outputs.is_semantic_tag }}"
-          echo "Has version change: ${{ steps.check.outputs.has_version_change }}"
-          echo "Should deploy: ${{ steps.deploy_check.outputs.should_deploy }}"
 
   build:
     name: Docker Image Build
@@ -191,7 +161,7 @@ jobs:
           echo "KBC_STORAGE_TOKEN=${{ secrets.KBC_STORAGE_TOKEN }}" >> $GITHUB_ENV
 
       - name: Run KBC test jobs
-        if: env.KBC_TEST_PROJECT_CONFIGS != '' && env.KBC_STORAGE_TOKEN != ''
+
         uses: keboola/action-run-configs-parallel@master
         with:
           token: ${{ secrets.KBC_STORAGE_TOKEN }}
