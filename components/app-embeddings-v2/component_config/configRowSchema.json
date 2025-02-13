@@ -1,6 +1,6 @@
 {
     "type": "object",
-    "title": "Embeddings Row Configuration",
+    "title": "Vector Store Configuration",
     "required": [
         "text_column"
     ],
@@ -254,6 +254,11 @@
                             "type": "string",
                             "title": "API Key",
                             "format": "password"
+                        },
+                        "collection_name": {
+                            "type": "string",
+                            "title": "Collection Name",
+                            "default": "keboola_embeddings"
                         }
                     }
                 },
