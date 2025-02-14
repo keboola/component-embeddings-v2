@@ -192,7 +192,7 @@ class VectorStoreManager:
     @retry(
         stop=stop_after_attempt(MAX_RETRIES),
         wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF),
-        retry=lambda e: not isinstance(e, UserException),
+        retry=retry_if_not_exception_type(UserException),
         reraise=True
     )
     async def store_vectors(
