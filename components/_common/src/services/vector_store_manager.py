@@ -21,7 +21,7 @@ from pinecone import Pinecone
 from pymilvus import connections
 from qdrant_client import QdrantClient
 from redis.asyncio import Redis as AsyncRedis
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_not_exception_type
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -232,7 +232,7 @@ class VectorStoreManager:
     @retry(
         stop=stop_after_attempt(MAX_RETRIES),
         wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF),
-        retry=lambda e: not isinstance(e, UserException),
+        retry=retry_if_not_exception_type(UserException),
         reraise=True
     )
     async def upsert_vectors(

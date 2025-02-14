@@ -39,6 +39,7 @@ class Component(ComponentBase):
                 self.config,
                 self.embedding_manager.embedding_model
             )
+            self._test_vector_store_connection(self.vector_store_manager)
             logging.info("Vector store connection successful")
 
         logging.info("Services initialized")

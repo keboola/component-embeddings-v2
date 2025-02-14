@@ -114,8 +114,7 @@
                         },
                         "username": {
                             "type": "string",
-                            "title": "Username",
-                            "format": "password"
+                            "title": "Username"
                         },
                         "#password": {
                             "type": "string",
@@ -195,8 +194,7 @@
                         },
                         "username": {
                             "type": "string",
-                            "title": "Username",
-                            "format": "password"
+                            "title": "Username"
                         },
                         "#password": {
                             "type": "string",
@@ -268,8 +266,7 @@
                         },
                         "username": {
                             "type": "string",
-                            "title": "Username",
-                            "format": "password"
+                            "title": "Username"
                         },
                         "#password": {
                             "type": "string",
