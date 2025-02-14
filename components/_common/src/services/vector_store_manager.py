@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TypeAlias
 
 from keboola.component.exceptions import UserException
+from grpc import RpcError
 from langchain_community.vectorstores import OpenSearchVectorSearch
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -26,7 +27,6 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 sys.path.append(str(Path(__file__).parent.parent))
 
 from configuration import ComponentConfig  # noqa
-from exceptions import friendly_error_handler, handle_exception  # noqa
 
 # Type aliases
 VectorData: TypeAlias = dict[str, str | list[float]]
@@ -51,7 +51,6 @@ class VectorStoreManager:
 
         self.vector_store = self._initialize_vector_store()
 
-    @friendly_error_handler
     def _initialize_vector_store(self):
         """Initialize the vector store based on configuration."""
         db_config = self.config.vector_db
@@ -188,9 +187,10 @@ class VectorStoreManager:
 
     @retry(
         stop=stop_after_attempt(MAX_RETRIES),
-        wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF)
+        wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF),
+        retry=lambda e: not isinstance(e, UserException),
+        reraise=True
     )
-    @friendly_error_handler
     async def store_vectors(
             self,
             texts: Sequence[str],
@@ -227,9 +227,10 @@ class VectorStoreManager:
 
     @retry(
         stop=stop_after_attempt(MAX_RETRIES),
-        wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF)
+        wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF),
+        retry=lambda e: not isinstance(e, UserException),
+        reraise=True
     )
-    @friendly_error_handler
     async def upsert_vectors(
             self,
             texts: Sequence[str],
@@ -238,23 +239,29 @@ class VectorStoreManager:
             ids: Sequence[str]
     ) -> None:
         """Upsert vectors in the vector store (update if exists, insert if not)."""
-        if not self.vector_store:
-            return
+        try:
+            if not self.vector_store:
+                return
 
-        documents = self._create_documents(texts, embeddings, metadata)
-        batch_size = self.config.advanced_options.batch_size
+            documents = self._create_documents(texts, embeddings, metadata)
+            batch_size = self.config.advanced_options.batch_size
 
-        for i in range(0, len(documents), batch_size):
-            batch = documents[i:i + batch_size]
-            batch_ids = ids[i:i + batch_size]
+            for i in range(0, len(documents), batch_size):
+                batch = documents[i:i + batch_size]
+                batch_ids = ids[i:i + batch_size]
 
-            async with self.semaphore:
-                # All vector stores support upsert via add_documents with ids
-                if isinstance(self.vector_store, OpenSearchVectorSearch):
-                    # OpenSearch has special handling via native client
-                    await self.vector_store.aadd_documents(batch)
-                else:
-                    # For other vector stores use standard add_documents with ids
-                    await self.vector_store.aadd_documents(batch, ids=batch_ids)
-                    logging.debug(f"Upserted {len(batch)} vectors with IDs: {batch_ids}")
-                    self.stored_ids.extend(batch_ids)
+                async with self.semaphore:
+                    # All vector stores support upsert via add_documents with ids
+                    if isinstance(self.vector_store, OpenSearchVectorSearch):
+                        # OpenSearch has special handling via native client
+                        await self.vector_store.aadd_documents(batch)
+                    else:
+                        # For other vector stores use standard add_documents with ids
+                        await self.vector_store.aadd_documents(batch, ids=batch_ids)
+                        logging.debug(f"Upserted {len(batch)} vectors with IDs: {batch_ids}")
+                        self.stored_ids.extend(batch_ids)
+        except Exception as e:
+            if isinstance(e, RpcError) and "details =" in str(e):
+                detail = str(e).split("details =")[1].strip().strip('"')
+                raise UserException(detail)
+            raise
