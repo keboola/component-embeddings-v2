@@ -3,8 +3,8 @@ name: app-embeddings-v2
 
 on:
   push:
-    branches-ignore:
-        - 'main' # Skip the workflow on the main branch for tags is used
+    tags:
+      - '*' # Skip the workflow on the main branch without tag
     paths:
       - 'components/app-embeddings-v2/**'
       - 'components/_common/**'
