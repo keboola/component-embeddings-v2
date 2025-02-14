@@ -26,6 +26,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 sys.path.append(str(Path(__file__).parent.parent))
 
 from configuration import ComponentConfig  # noqa
+from exceptions import friendly_error_handler, handle_exception  # noqa
 
 # Type aliases
 VectorData: TypeAlias = dict[str, str | list[float]]
@@ -50,6 +51,7 @@ class VectorStoreManager:
 
         self.vector_store = self._initialize_vector_store()
 
+    @friendly_error_handler
     def _initialize_vector_store(self):
         """Initialize the vector store based on configuration."""
         db_config = self.config.vector_db
@@ -188,6 +190,7 @@ class VectorStoreManager:
         stop=stop_after_attempt(MAX_RETRIES),
         wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF)
     )
+    @friendly_error_handler
     async def store_vectors(
             self,
             texts: Sequence[str],
@@ -198,38 +201,35 @@ class VectorStoreManager:
         if not self.vector_store:
             return
 
-        try:
-            # Create LangChain documents with embeddings
-            documents = self._create_documents(texts, embeddings, metadata)
+        # Create LangChain documents with embeddings
+        documents = self._create_documents(texts, embeddings, metadata)
 
-            # Process in batches using configured batch size
-            batch_size = self.config.advanced_options.batch_size
-            for i in range(0, len(documents), batch_size):
-                batch = documents[i:i + batch_size]
+        # Process in batches using configured batch size
+        batch_size = self.config.advanced_options.batch_size
+        for i in range(0, len(documents), batch_size):
+            batch = documents[i:i + batch_size]
 
-                match type(self.vector_store).__name__:
-                    case "PGVector" | "RedisVectorStore" | "OpenSearchVectorSearch":
-                        # These support and benefit from async operations
-                        async with self.semaphore:
-                            ids = await self.vector_store.aadd_documents(batch)
-                            logging.debug(f"Async Stored {len(ids)} vectors")
-                            self.stored_ids.extend(ids)
-                    case _:
-                        # Others are better with synchronous batch operations
-                        ids = await asyncio.to_thread(
-                            self.vector_store.add_documents,
-                            batch
-                        )
-                        logging.debug(f"Stored {len(ids)} vectors")
+            match type(self.vector_store).__name__:
+                case "PGVector" | "RedisVectorStore" | "OpenSearchVectorSearch":
+                    # These support and benefit from async operations
+                    async with self.semaphore:
+                        ids = await self.vector_store.aadd_documents(batch)
+                        logging.debug(f"Async Stored {len(ids)} vectors")
                         self.stored_ids.extend(ids)
-
-        except Exception as e:
-            raise UserException(f"Failed to store vectors: {str(e)}")
+                case _:
+                    # Others are better with synchronous batch operations
+                    ids = await asyncio.to_thread(
+                        self.vector_store.add_documents,
+                        batch
+                    )
+                    logging.debug(f"Stored {len(ids)} vectors")
+                    self.stored_ids.extend(ids)
 
     @retry(
         stop=stop_after_attempt(MAX_RETRIES),
         wait=wait_exponential(multiplier=1, min=MIN_BACKOFF, max=MAX_BACKOFF)
     )
+    @friendly_error_handler
     async def upsert_vectors(
             self,
             texts: Sequence[str],
@@ -237,35 +237,24 @@ class VectorStoreManager:
             metadata: Sequence[dict],
             ids: Sequence[str]
     ) -> None:
-        """Upsert vectors in the vector store (update if exists, insert if not).
-
-        Args:
-            texts: Sequence of text content to embed
-            embeddings: Sequence of pre-computed embedding vectors
-            metadata: Sequence of metadata dictionaries for each text
-            ids: Sequence of IDs for the vectors to upsert
-        """
+        """Upsert vectors in the vector store (update if exists, insert if not)."""
         if not self.vector_store:
             return
 
-        try:
-            documents = self._create_documents(texts, embeddings, metadata)
-            batch_size = self.config.advanced_options.batch_size
+        documents = self._create_documents(texts, embeddings, metadata)
+        batch_size = self.config.advanced_options.batch_size
 
-            for i in range(0, len(documents), batch_size):
-                batch = documents[i:i + batch_size]
-                batch_ids = ids[i:i + batch_size]
+        for i in range(0, len(documents), batch_size):
+            batch = documents[i:i + batch_size]
+            batch_ids = ids[i:i + batch_size]
 
-                async with self.semaphore:
-                    # All vector stores support upsert via add_documents with ids
-                    if isinstance(self.vector_store, OpenSearchVectorSearch):
-                        # OpenSearch has special handling via native client
-                        await self.vector_store.aadd_documents(batch)
-                    else:
-                        # For other vector stores use standard add_documents with ids
-                        await self.vector_store.aadd_documents(batch, ids=batch_ids)
-                        logging.debug(f"Upserted {len(batch)} vectors with IDs: {batch_ids}")
-                        self.stored_ids.extend(batch_ids)
-
-        except Exception as e:
-            raise UserException(f"Failed to upsert vectors: {str(e)}")
+            async with self.semaphore:
+                # All vector stores support upsert via add_documents with ids
+                if isinstance(self.vector_store, OpenSearchVectorSearch):
+                    # OpenSearch has special handling via native client
+                    await self.vector_store.aadd_documents(batch)
+                else:
+                    # For other vector stores use standard add_documents with ids
+                    await self.vector_store.aadd_documents(batch, ids=batch_ids)
+                    logging.debug(f"Upserted {len(batch)} vectors with IDs: {batch_ids}")
+                    self.stored_ids.extend(batch_ids)
