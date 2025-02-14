@@ -3,6 +3,8 @@ name: wr-pgvector-embeddings
 
 on:
   push:
+    branches-ignore:
+      - 'main' # Skip the workflow on the main branch for tags is used
     paths:
       - 'components/wr-pgvector-embeddings/**'
       - 'components/_common/**'
