@@ -85,8 +85,8 @@ class Component(ComponentBase):
         output_schema["embedding"] = ColumnDefinition(
             data_types={
                 "base": DataType(dtype="STRING"),
-                "snowflake": DataType(dtype="VECTOR(FLOAT,256)"),
-                "bigquery": DataType(dtype="ARRAY<FLOAT64>")
+                "snowflake": DataType(dtype="VECTOR", length="FLOAT,256"),
+                "bigquery": DataType(dtype="STRING")
             },
             nullable=True,
             primary_key=False,
