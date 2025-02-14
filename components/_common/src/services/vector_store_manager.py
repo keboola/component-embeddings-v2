@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import TypeAlias
 
 from keboola.component.exceptions import UserException
-from grpc import RpcError
 from langchain_community.vectorstores import OpenSearchVectorSearch
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -54,108 +53,113 @@ class VectorStoreManager:
     def _initialize_vector_store(self):
         """Initialize the vector store based on configuration."""
         db_config = self.config.vector_db
+        try:
+            match db_config.db_type:
+                case "pgvector":
+                    settings = db_config.pgvector_settings
+                    connection_string = (
+                        f"postgresql+psycopg://{settings.username}:{settings.password}"
+                        f"@{settings.host}:{settings.port}/{settings.database}"
+                    )
+                    return PGVector(
+                        connection=connection_string,
+                        embeddings=self.embedding_model,
+                        collection_name=settings.collection_name,
+                        async_mode=True
+                    )
 
-        match db_config.db_type:
-            case "pgvector":
-                settings = db_config.pgvector_settings
-                connection_string = (
-                    f"postgresql+psycopg://{settings.username}:{settings.password}"
-                    f"@{settings.host}:{settings.port}/{settings.database}"
-                )
-                return PGVector(
-                    connection=connection_string,
-                    embeddings=self.embedding_model,
-                    collection_name=settings.collection_name,
-                    async_mode=True
-                )
+                case "pinecone":
+                    settings = db_config.pinecone_settings
 
-            case "pinecone":
-                settings = db_config.pinecone_settings
+                    pc = Pinecone(api_key=settings.api_key)
+                    index_name = settings.index_name
 
-                pc = Pinecone(api_key=settings.api_key)
-                index_name = settings.index_name
+                    if index_name not in [index_info["name"] for index_info in pc.list_indexes()]:
+                        raise UserException(f"Index '{index_name}' not found in Pinecone.")
 
-                if index_name not in [index_info["name"] for index_info in pc.list_indexes()]:
-                    raise UserException(f"Index '{index_name}' not found in Pinecone.")
+                    index = pc.Index(index_name)
+                    return PineconeVectorStore(index=index, embedding=self.embedding_model)
 
-                index = pc.Index(index_name)
-                return PineconeVectorStore(index=index, embedding=self.embedding_model)
+                case "qdrant":
+                    settings = db_config.qdrant_settings
+                    client = QdrantClient(
+                        url=settings.url,
+                        api_key=settings.api_key,
+                        prefer_grpc=True,
+                        timeout=30  # Increase timeout for batch operations
+                    )
+                    return QdrantVectorStore(
+                        client=client,
+                        collection_name=settings.collection_name,
+                        embedding=self.embedding_model
+                    )
 
-            case "qdrant":
-                settings = db_config.qdrant_settings
-                client = QdrantClient(
-                    url=settings.url,
-                    api_key=settings.api_key,
-                    prefer_grpc=True,
-                    timeout=30  # Increase timeout for batch operations
-                )
-                return QdrantVectorStore(
-                    client=client,
-                    collection_name=settings.collection_name,
-                    embedding=self.embedding_model
-                )
+                case "milvus":
+                    settings = db_config.milvus_settings
 
-            case "milvus":
-                settings = db_config.milvus_settings
+                    connections.connect(
+                        alias="default",
+                        host=settings.host,
+                        port=settings.port,
+                        user=settings.username,
+                        password=settings.password
+                    )
+                    return Milvus(
+                        collection_name="embeddings",
+                        embedding_function=self.embedding_model,
+                        connection_args={
+                            "host": settings.host,
+                            "port": settings.port,
+                            "user": settings.username,
+                            "password": settings.password,
+                            "secure": True
+                        }
+                    )
 
-                connections.connect(
-                    alias="default",
-                    host=settings.host,
-                    port=settings.port,
-                    user=settings.username,
-                    password=settings.password
-                )
-                return Milvus(
-                    collection_name="embeddings",
-                    embedding_function=self.embedding_model,
-                    connection_args={
-                        "host": settings.host,
-                        "port": settings.port,
-                        "user": settings.username,
-                        "password": settings.password,
-                        "secure": True
-                    }
-                )
+                case "redis":
+                    settings = db_config.redis_settings
 
-            case "redis":
-                settings = db_config.redis_settings
+                    client = AsyncRedis(
+                        host=settings.host,
+                        port=settings.port,
+                        password=settings.password,
+                        ssl=True
+                    )
+                    return RedisVectorStore(
+                        redis_client=client,
+                        index_name="embeddings",
+                        embeddings=self.embedding_model
+                    )
 
-                client = AsyncRedis(
-                    host=settings.host,
-                    port=settings.port,
-                    password=settings.password,
-                    ssl=True
-                )
-                return RedisVectorStore(
-                    redis_client=client,
-                    index_name="embeddings",
-                    embeddings=self.embedding_model
-                )
+                case "opensearch":
+                    settings = db_config.opensearch_settings
 
-            case "opensearch":
-                settings = db_config.opensearch_settings
-
-                client = AsyncOpenSearch(
-                    hosts=[{"host": settings.host, "port": settings.port}],
-                    http_auth=(settings.username, settings.password),
-                    use_ssl=True,
-                    timeout=30,
-                    max_retries=MAX_RETRIES,
-                    retry_on_timeout=True,
-                    verify_certs=True
-                )
-                return OpenSearchVectorSearch(
-                    client=client,
-                    index_name=settings.index_name,
-                    embedding_function=self.embedding_model,
-                    engine="nmslib",
-                    space_type="cosinesimil",
-                    ef_construction=512,
-                    m=16,
-                    opensearch_url="TODO"
-                )
-            case _:
-                raise UserException(f"Unsupported vector store type: {db_config.db_type}")
+                    client = AsyncOpenSearch(
+                        hosts=[{"host": settings.host, "port": settings.port}],
+                        http_auth=(settings.username, settings.password),
+                        use_ssl=True,
+                        timeout=30,
+                        max_retries=MAX_RETRIES,
+                        retry_on_timeout=True,
+                        verify_certs=True
+                    )
+                    return OpenSearchVectorSearch(
+                        client=client,
+                        index_name=settings.index_name,
+                        embedding_function=self.embedding_model,
+                        engine="nmslib",
+                        space_type="cosinesimil",
+                        ef_construction=512,
+                        m=16,
+                        opensearch_url="TODO"
+                    )
+                case _:
+                    raise UserException(f"Unsupported vector store type: {db_config.db_type}")
+        except Exception as e:
+            if "details =" in str(e):
+                detail = str(e).split("details =")[1].strip().strip('"')
+                raise UserException(detail)
+            raise UserException(f"Failed to initialize vector client: {str(e)}")
 
     @staticmethod
     def _create_documents(
@@ -261,7 +265,7 @@ class VectorStoreManager:
                         logging.debug(f"Upserted {len(batch)} vectors with IDs: {batch_ids}")
                         self.stored_ids.extend(batch_ids)
         except Exception as e:
-            if isinstance(e, RpcError) and "details =" in str(e):
+            if "details =" in str(e):
                 detail = str(e).split("details =")[1].strip().strip('"')
                 raise UserException(detail)
-            raise
+            raise UserException(f"Failed to upsert vectors: {str(e)}")
