@@ -3,6 +3,9 @@ name: app-embeddings-v2
 
 on:
   push:
+    branches:
+      - 'feature/*'
+      - 'bug/*'
     tags:
       - '*' # Skip the workflow on the main branch without tag
     paths:
