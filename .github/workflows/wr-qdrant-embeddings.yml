@@ -3,6 +3,9 @@ name: wr-qdrant-embeddings
 
 on:
   push:
+    branches:
+      - 'feature/*'
+      - 'bug/*'
     tags:
       - '*' # Skip the workflow on the main branch without tag
     paths:
