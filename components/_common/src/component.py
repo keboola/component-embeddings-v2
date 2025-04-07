@@ -122,14 +122,14 @@ class Component(ComponentBase):
             # Create corresponding list of chunked texts and expanded metadata
             chunked_texts = []
             expanded_metadata = []
-            
+
             # Process each text and its metadata
             for text, meta in zip(texts, metadata):
                 chunks = self.embedding_manager.split_text(text)
                 chunked_texts.extend(chunks)
                 # Duplicate metadata for each chunk of this text
                 expanded_metadata.extend([meta] * len(chunks))
-            
+
             texts = chunked_texts
             metadata = expanded_metadata
 
