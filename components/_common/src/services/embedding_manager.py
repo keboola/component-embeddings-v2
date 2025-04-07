@@ -136,7 +136,7 @@ class EmbeddingManager:
             case _:
                 raise UserException(f"Unsupported embedding provider: {settings.provider_type}")
 
-    def _split_text(self, text: str) -> ChunkList:
+    def split_text(self, text: str) -> ChunkList:
         """Split text into chunks."""
         if not self.text_splitter:
             return [text]
@@ -186,7 +186,7 @@ class EmbeddingManager:
             # Split texts into chunks
             all_chunks = []
             for text in texts:
-                chunks = self._split_text(text)
+                chunks = self.split_text(text)
                 all_chunks.extend(chunks)
 
             # Process chunks

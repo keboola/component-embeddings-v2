@@ -119,20 +119,19 @@ class Component(ComponentBase):
 
         # If chunking is enabled, we need to duplicate metadata for each chunk
         if self.config.advanced_options.enable_chunking:
-            # Calculate how many chunks were created for each text
-            chunks_per_text = len(embeddings) // len(texts)
-            # Duplicate metadata for each chunk
-            expanded_metadata = []
-            for meta in metadata:
-                expanded_metadata.extend([meta] * chunks_per_text)
-            metadata = expanded_metadata
-
-            # Create corresponding list of chunked texts
+            # Create corresponding list of chunked texts and expanded metadata
             chunked_texts = []
-            for text in texts:
-                chunks = self.embedding_manager._split_text(text)
+            expanded_metadata = []
+            
+            # Process each text and its metadata
+            for text, meta in zip(texts, metadata):
+                chunks = self.embedding_manager.split_text(text)
                 chunked_texts.extend(chunks)
+                # Duplicate metadata for each chunk of this text
+                expanded_metadata.extend([meta] * len(chunks))
+            
             texts = chunked_texts
+            metadata = expanded_metadata
 
         return texts, metadata, embeddings
 
