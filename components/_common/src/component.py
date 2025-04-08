@@ -1,15 +1,9 @@
 """Main component file for the embedding service."""
-import warnings
-
-warnings.filterwarnings("ignore",
-                        message="Field \"model_arn\" in BedrockRerank has conflict with protected namespace \"model_\"") # noqa
-warnings.filterwarnings("ignore",
-                        message="As the c extension couldn't be imported, `google-crc32c` is using a pure python implementation that is significantly slower") # noqa
-
 import asyncio
 import csv
 import logging
 import sys
+import warnings
 
 from collections import OrderedDict
 
@@ -18,10 +12,15 @@ from keboola.component.dao import ColumnDefinition, DataType
 from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import ValidationResult, MessageType
 
-from configuration import ComponentConfig
-from services.csv_manager import CSVManager
-from services.embedding_manager import EmbeddingManager
-from services.vector_store_manager import VectorStoreManager
+warnings.filterwarnings("ignore",
+                        message="Field \"model_arn\" in BedrockRerank has conflict with protected namespace \"model_\"")  # noqa
+warnings.filterwarnings("ignore",
+                        message="As the c extension couldn't be imported, `google-crc32c` is using a pure python implementation that is significantly slower")  # noqa
+
+from configuration import ComponentConfig  # noqa: E402
+from services.csv_manager import CSVManager  # noqa: E402
+from services.embedding_manager import EmbeddingManager  # noqa: E402
+from services.vector_store_manager import VectorStoreManager  # noqa: E402
 
 csv.field_size_limit(sys.maxsize)
 
