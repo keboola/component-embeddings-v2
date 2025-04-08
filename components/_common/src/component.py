@@ -1,8 +1,16 @@
 """Main component file for the embedding service."""
+import warnings
+
+warnings.filterwarnings("ignore",
+                        message="Field \"model_arn\" in BedrockRerank has conflict with protected namespace \"model_\"")
+warnings.filterwarnings("ignore",
+                        message="As the c extension couldn't be imported, `google-crc32c` is using a pure python implementation that is significantly slower")
+
 import asyncio
 import csv
 import logging
 import sys
+
 from collections import OrderedDict
 
 from keboola.component.base import ComponentBase, sync_action
