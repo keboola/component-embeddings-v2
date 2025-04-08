@@ -2,9 +2,9 @@
 import warnings
 
 warnings.filterwarnings("ignore",
-                        message="Field \"model_arn\" in BedrockRerank has conflict with protected namespace \"model_\"")
+                        message="Field \"model_arn\" in BedrockRerank has conflict with protected namespace \"model_\"") # noqa
 warnings.filterwarnings("ignore",
-                        message="As the c extension couldn't be imported, `google-crc32c` is using a pure python implementation that is significantly slower")
+                        message="As the c extension couldn't be imported, `google-crc32c` is using a pure python implementation that is significantly slower") # noqa
 
 import asyncio
 import csv
