@@ -1,6 +1,6 @@
 {
     "type": "object",
-    "title": "Embeddings Configuration",
+    "title": "Configuration",
     "required": [
         "embedding_settings"
     ],
@@ -281,10 +281,11 @@
                 }
             }
         },
-        "test_connection": {
+        "test_embedding_service_connection": {
             "type": "button",
             "format": "sync-action",
             "propertyOrder": 300,
+            "hidden":true,
             "options": {
                 "async": {
                     "label": "Test Connection to Embedding Service",
@@ -292,6 +293,61 @@
                     "cache": false
                 }
             }
+        },
+
+    "pgvector_settings": {
+        "type": "object",
+        "title": "PostgreSQL Settings",
+        "options": {
+            "dependencies": {
+                "db_type": "pgvector"
+            }
+        },
+        "required": [
+            "host",
+            "port",
+            "database",
+            "username",
+            "#password"
+        ],
+        "properties": {
+            "host": {
+                "type": "string",
+                "title": "Host",
+                "description": "PostgreSQL server hostname"
+            },
+            "port": {
+                "type": "integer",
+                "title": "Port",
+                "default": 5432
+            },
+            "database": {
+                "type": "string",
+                "title": "Database",
+                "description": "Database name"
+            },
+            "username": {
+                "type": "string",
+                "title": "Username"
+            },
+            "#password": {
+                "type": "string",
+                "title": "Password",
+                "format": "password"
+            }
+        }
+    },
+    "test_database_connection": {
+        "type": "button",
+        "format": "sync-action",
+        "options": {
+            "hidden": true,
+            "async": {
+                "cache": false,
+                "label": "Test Connection to Vector Store Database",
+                "action": "testVectorStoreConnection"
+            }
         }
     }
+  }
 }

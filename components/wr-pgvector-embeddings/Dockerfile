@@ -25,7 +25,6 @@ RUN pip install --no-cache-dir flake8
 # Copy only necessary files
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY components/_common/src /code/src/
-COPY components/_common/tests /code/tests/
 COPY components/_common/flake8.cfg /code/flake8.cfg
 COPY components/_common/deploy.sh /code/deploy.sh
 

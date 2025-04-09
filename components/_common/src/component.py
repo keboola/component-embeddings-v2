@@ -211,7 +211,9 @@ class Component(ComponentBase):
     def _test_vector_store_connection(vector_store_manager: VectorStoreManager) -> None:
         """Test connection to vector database."""
         try:
-            vector_store_manager.vector_store.search("test", "similarity")
+            logging.info("Testing connection to vector database...")
+            asyncio.run(vector_store_manager.vector_store.asearch("test", "similarity"))
+            logging.info("Connection to vector database successful.")
         except Exception as e:
             raise UserException(f"Failed to connect to vector database: {str(e)}")
 

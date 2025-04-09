@@ -282,7 +282,7 @@
                 }
             }
         },
-        "test_connection": {
+        "test_embedding_service_connection": {
             "type": "button",
             "format": "sync-action",
             "propertyOrder": 300,
@@ -291,6 +291,43 @@
                     "label": "Test Connection to Embedding Service",
                     "action": "testEmbeddingServiceConnection",
                     "cache": false
+                }
+            }
+        },
+        "qdrant_settings": {
+            "type": "object",
+            "title": "Qdrant Settings",
+            "options": {
+                "dependencies": {
+                    "db_type": "qdrant"
+                }
+            },
+            "required": [
+                "url",
+                "#api_key"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "title": "URL",
+                    "description": "Qdrant instance URL"
+                },
+                "#api_key": {
+                    "type": "string",
+                    "title": "API Key",
+                    "format": "password"
+                }
+            }
+        },
+        "test_database_connection": {
+            "type": "button",
+            "format": "sync-action",
+            "options": {
+                "hidden": true,
+                "async": {
+                    "cache": false,
+                    "label": "Test Connection to Vector Store Database",
+                    "action": "testVectorStoreConnection"
                 }
             }
         }
