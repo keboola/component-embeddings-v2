@@ -223,12 +223,12 @@ class GoogleVertexSettings(BaseModel):
 
 class BedrockSettings(BaseModel):
     """AWS Bedrock settings."""
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
 
     aws_access_key: str = Field(validation_alias="#aws_access_key")
     aws_secret_key: str = Field(validation_alias="#aws_secret_key")
     region: str
-    model_id: str = model_config.update(protected_namespaces=())
+    model_id: str
 
 
 class EmbeddingSettings(BaseModel):
