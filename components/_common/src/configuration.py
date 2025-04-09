@@ -290,7 +290,8 @@ class EmbeddingSettings(BaseModel):
         # Check if the required settings exist
         if settings_map.get(self.provider_type) is None:
             raise ValueError(
-                f"{self.provider_type.value}_settings must be provided when provider_type is {self.provider_type.value}")
+                f"{self.provider_type.value}_settings "
+                f"must be provided when provider_type is {self.provider_type.value}")
 
         # In development/test environment, don't enforce strict validation
         # This makes it easier to work with test configurations
@@ -302,7 +303,8 @@ class EmbeddingSettings(BaseModel):
             for provider, settings in settings_map.items():
                 if provider != self.provider_type and settings is not None:
                     raise ValueError(
-                        f"{provider.value}_settings should not be provided when provider_type is {self.provider_type.value}")
+                        f"{provider.value}_settings "
+                        f"should not be provided when provider_type is {self.provider_type.value}")
 
         return self
 
