@@ -285,8 +285,8 @@
             "type": "button",
             "format": "sync-action",
             "propertyOrder": 300,
-            "hidden":true,
             "options": {
+                "hidden": true,
                 "async": {
                     "label": "Test Connection to Embedding Service",
                     "action": "testEmbeddingServiceConnection",
@@ -294,60 +294,59 @@
                 }
             }
         },
-
-    "pgvector_settings": {
-        "type": "object",
-        "title": "PostgreSQL Settings",
-        "options": {
-            "dependencies": {
-                "db_type": "pgvector"
+        "pgvector_settings": {
+            "type": "object",
+            "title": "PostgreSQL Settings",
+            "options": {
+                "dependencies": {
+                    "db_type": "pgvector"
+                }
+            },
+            "required": [
+                "host",
+                "port",
+                "database",
+                "username",
+                "#password"
+            ],
+            "properties": {
+                "host": {
+                    "type": "string",
+                    "title": "Host",
+                    "description": "PostgreSQL server hostname"
+                },
+                "port": {
+                    "type": "integer",
+                    "title": "Port",
+                    "default": 5432
+                },
+                "database": {
+                    "type": "string",
+                    "title": "Database",
+                    "description": "Database name"
+                },
+                "username": {
+                    "type": "string",
+                    "title": "Username"
+                },
+                "#password": {
+                    "type": "string",
+                    "title": "Password",
+                    "format": "password"
+                }
             }
         },
-        "required": [
-            "host",
-            "port",
-            "database",
-            "username",
-            "#password"
-        ],
-        "properties": {
-            "host": {
-                "type": "string",
-                "title": "Host",
-                "description": "PostgreSQL server hostname"
-            },
-            "port": {
-                "type": "integer",
-                "title": "Port",
-                "default": 5432
-            },
-            "database": {
-                "type": "string",
-                "title": "Database",
-                "description": "Database name"
-            },
-            "username": {
-                "type": "string",
-                "title": "Username"
-            },
-            "#password": {
-                "type": "string",
-                "title": "Password",
-                "format": "password"
-            }
-        }
-    },
-    "test_database_connection": {
-        "type": "button",
-        "format": "sync-action",
-        "options": {
-            "hidden": true,
-            "async": {
-                "cache": false,
-                "label": "Test Connection to Vector Store Database",
-                "action": "testVectorStoreConnection"
+        "test_database_connection": {
+            "type": "button",
+            "format": "sync-action",
+            "options": {
+                "hidden": true,
+                "async": {
+                    "cache": false,
+                    "label": "Test Connection to Vector Store Database",
+                    "action": "testVectorStoreConnection"
+                }
             }
         }
     }
-  }
 }

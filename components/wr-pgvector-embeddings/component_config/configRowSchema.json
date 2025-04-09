@@ -1,6 +1,6 @@
 {
     "type": "object",
-    "title": "Embeddings Row Configuration",
+    "title": "Vector Store Configuration",
     "required": [
         "text_column"
     ],
@@ -39,6 +39,7 @@
                 "chunking_settings": {
                     "type": "object",
                     "title": "Chunking Settings",
+                    "propertyOrder": 3,
                     "options": {
                         "dependencies": {
                             "enable_chunking": true

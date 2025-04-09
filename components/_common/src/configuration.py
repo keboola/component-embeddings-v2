@@ -68,7 +68,7 @@ class PGVectorSettings(BaseModel):
     database: str
     username: str
     password: str = Field(validation_alias="#password")
-    collection_name: str = "keboola_embeddings"
+    collection_name: Optional[str] = None
 
 
 class PineconeSettings(BaseModel):
@@ -86,7 +86,7 @@ class QdrantSettings(BaseModel):
 
     url: str
     api_key: str = Field(validation_alias="#api_key")
-    collection_name: str = "keboola_embeddings"
+    collection_name: Optional[str] = None
 
 
 class MilvusSettings(BaseModel):
@@ -351,11 +351,30 @@ class ComponentConfig(BaseModel):
     qdrant_settings: Optional[QdrantSettings] = None
 
     @model_validator(mode='after')
-    def validate_vector_db(self) -> 'ComponentConfig':
-        """Validate vector database configuration if necessary."""
-        output_config = self.output_config or OutputConfig()
-
-        # Handle direct DB settings from writer components
+    def backward_compatibility(self) -> 'ComponentConfig':
+        """Ensure backward compatibility with older configuration formats."""
+        # Default collection name
+        DEFAULT_COLLECTION_NAME = "keboola_embeddings"
+        
+        # -- 1. Setting default values and transferring values from destination --
+        
+        # Create output_config if missing
+        if self.output_config is None:
+            self.output_config = OutputConfig()
+            
+        # Use values from destination if they exist
+        if self.destination:
+            # Use id_column from primary_key
+            if self.destination.primary_key and not self.id_column:
+                self.id_column = self.destination.primary_key
+                
+            # Use metadata_columns from destination
+            if self.destination.metadata_columns and not self.metadata_columns:
+                self.metadata_columns = self.destination.metadata_columns
+        
+        # -- 2. Processing writer components and legacy settings --
+        
+        # Create vector_db from direct settings (legacy)
         if self.vector_db is None:
             if self.pgvector_settings is not None:
                 self.vector_db = VectorDBConfig(
@@ -367,43 +386,36 @@ class ComponentConfig(BaseModel):
                     db_type=VectorStoreType.QDRANT,
                     qdrant_settings=self.qdrant_settings
                 )
-
-        # Validate that vector_db is provided when needed
-        if output_config.save_to_vectordb and self.vector_db is None:
-            raise ValueError("vector_db must be provided when save_to_vectordb is True")
-
-        # Handle metadata_columns from destination for legacy configs
-        if self.destination and self.destination.metadata_columns and not self.metadata_columns:
-            self.metadata_columns = self.destination.metadata_columns
-
-        # Ensure output_config always exists
-        if self.output_config is None:
-            self.output_config = OutputConfig()
-            # For writer components, we assume they save to vector DB
+                
+        # Get destination.collection_name if it exists
+        destination_collection = self.destination.collection_name if self.destination else None
+        
+        # -- 3. Setting collection_name for all supported DBs --
+        # Process nested settings in vector_db
+        if self.vector_db:
+            if self.vector_db.db_type == VectorStoreType.PGVECTOR and self.vector_db.pgvector_settings:
+                if self.vector_db.pgvector_settings.collection_name is None:
+                    self.vector_db.pgvector_settings.collection_name = destination_collection or DEFAULT_COLLECTION_NAME
+                    
+            elif self.vector_db.db_type == VectorStoreType.QDRANT and self.vector_db.qdrant_settings:
+                if self.vector_db.qdrant_settings.collection_name is None:
+                    self.vector_db.qdrant_settings.collection_name = destination_collection or DEFAULT_COLLECTION_NAME
+        
+        # Process direct settings (legacy)
+        if self.pgvector_settings and self.pgvector_settings.collection_name is None:
+            self.pgvector_settings.collection_name = destination_collection or DEFAULT_COLLECTION_NAME
+            
+        if self.qdrant_settings and self.qdrant_settings.collection_name is None:
+            self.qdrant_settings.collection_name = destination_collection or DEFAULT_COLLECTION_NAME
+        
+        # -- 4. Final settings for writer components --
+        # For writer components, we assume they save to vector DB
+        if not self.output_config.save_to_vectordb:
             if self.vector_db is not None or self.pgvector_settings is not None or self.qdrant_settings is not None:
                 self.output_config.save_to_vectordb = True
+                
+        # Validate that vector_db exists when needed
+        if self.output_config.save_to_vectordb and self.vector_db is None:
+            raise ValueError("vector_db must be provided when save_to_vectordb is True")
 
         return self
-
-
-def get_component_configuration() -> ComponentConfig:
-    """Parse component configuration from environment."""
-    import json
-    import os
-    from pathlib import Path
-
-    # Get config path from environment or use default
-    data_dir = os.getenv('KBC_DATADIR', '')
-    config_path = Path(data_dir) / 'config.json'
-
-    # Read configuration
-    with open(config_path) as config_file:
-        config_data = json.load(config_file)
-
-    parameters = config_data.get('parameters', {})
-
-    try:
-        # Parse configuration
-        return ComponentConfig(**parameters)
-    except Exception as e:
-        raise ValueError(f"Failed to parse configuration: {str(e)}")
