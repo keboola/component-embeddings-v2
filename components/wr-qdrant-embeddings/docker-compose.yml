@@ -22,7 +22,8 @@ services:
       - ./component_config:/code/component_config
       - ./data:/data
       - ../_common/src:/code/src
-      - ../_common/tests:/code/tests
+      - ./scripts:/code/scripts
+      - ./tests:/code/tests
     environment:
       - KBC_DATADIR=/data
     command:
