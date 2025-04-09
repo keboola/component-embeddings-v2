@@ -20,7 +20,7 @@ class OpenAIModel(str, Enum):
     TEXT_EMBEDDING_3_SMALL = "text-embedding-3-small"
     TEXT_EMBEDDING_3_LARGE = "text-embedding-3-large"
     TEXT_EMBEDDING_ADA_002 = "text-embedding-ada-002"
-    
+
     # Support for any model string
     @classmethod
     def _missing_(cls, value):
@@ -35,12 +35,12 @@ class CohereModel(str, Enum):
     EMBED_ENGLISH_LIGHT_V3 = "embed-english-light-v3.0"
     EMBED_MULTILINGUAL_V3 = "embed-multilingual-v3.0"
     EMBED_MULTILINGUAL_LIGHT_V3 = "embed-multilingual-light-v3.0"
-    
+
     # Legacy models
     EMBED_ENGLISH = "embed-english-v2.0"
     EMBED_ENGLISH_LIGHT = "embed-english-light-v2.0"
     EMBED_MULTILINGUAL = "embed-multilingual-v2.0"
-    
+
     # Support for any model string
     @classmethod
     def _missing_(cls, value):
@@ -137,7 +137,7 @@ class VectorDBConfig(BaseModel):
         # If no db_type is specified, return early
         if self.db_type is None:
             return self
-            
+
         settings_map = {
             VectorStoreType.PGVECTOR: self.pgvector_settings,
             VectorStoreType.PINECONE: self.pinecone_settings,
@@ -155,12 +155,13 @@ class VectorDBConfig(BaseModel):
         # This makes it easier to work with test configurations
         import os
         is_dev_env = os.getenv('APP_ENV', '').lower() in ('development', 'test', '')
-        
+
         if not is_dev_env:
             # In production, enforce more strict validation - no extra settings
             for db_type, settings in settings_map.items():
                 if db_type != self.db_type and settings is not None:
-                    raise ValueError(f"{db_type.value}_settings should not be provided when db_type is {self.db_type.value}")
+                    raise ValueError(
+                        f"{db_type.value}_settings should not be provided when db_type is {self.db_type.value}")
 
         return self
 
@@ -288,18 +289,20 @@ class EmbeddingSettings(BaseModel):
 
         # Check if the required settings exist
         if settings_map.get(self.provider_type) is None:
-            raise ValueError(f"{self.provider_type.value}_settings must be provided when provider_type is {self.provider_type.value}")
+            raise ValueError(
+                f"{self.provider_type.value}_settings must be provided when provider_type is {self.provider_type.value}")
 
         # In development/test environment, don't enforce strict validation
         # This makes it easier to work with test configurations
         import os
         is_dev_env = os.getenv('APP_ENV', '').lower() in ('development', 'test', '')
-        
+
         if not is_dev_env:
             # In production, enforce more strict validation - no extra settings
             for provider, settings in settings_map.items():
                 if provider != self.provider_type and settings is not None:
-                    raise ValueError(f"{provider.value}_settings should not be provided when provider_type is {self.provider_type.value}")
+                    raise ValueError(
+                        f"{provider.value}_settings should not be provided when provider_type is {self.provider_type.value}")
 
         return self
 
@@ -318,7 +321,7 @@ class Destination(BaseModel):
     load_type: Optional[str] = None
     primary_key: Optional[str] = None
     metadata_columns: Optional[list[str]] = None
-    
+
     @property
     def is_incremental(self) -> bool:
         """Check if loading should be incremental."""
@@ -340,7 +343,7 @@ class ComponentConfig(BaseModel):
     destination: Optional[Destination] = None
     vector_db: Optional[VectorDBConfig] = None
     advanced_options: AdvancedOptions = Field(default_factory=AdvancedOptions)
-    
+
     # Legacy direct DB settings fields for writer components
     pgvector_settings: Optional[PGVectorSettings] = None
     qdrant_settings: Optional[QdrantSettings] = None
@@ -349,7 +352,7 @@ class ComponentConfig(BaseModel):
     def validate_vector_db(self) -> 'ComponentConfig':
         """Validate vector database configuration if necessary."""
         output_config = self.output_config or OutputConfig()
-        
+
         # Handle direct DB settings from writer components
         if self.vector_db is None:
             if self.pgvector_settings is not None:
@@ -362,22 +365,22 @@ class ComponentConfig(BaseModel):
                     db_type=VectorStoreType.QDRANT,
                     qdrant_settings=self.qdrant_settings
                 )
-        
+
         # Validate that vector_db is provided when needed
         if output_config.save_to_vectordb and self.vector_db is None:
             raise ValueError("vector_db must be provided when save_to_vectordb is True")
-            
+
         # Handle metadata_columns from destination for legacy configs
         if self.destination and self.destination.metadata_columns and not self.metadata_columns:
             self.metadata_columns = self.destination.metadata_columns
-        
+
         # Ensure output_config always exists
         if self.output_config is None:
             self.output_config = OutputConfig()
             # For writer components, we assume they save to vector DB
             if self.vector_db is not None or self.pgvector_settings is not None or self.qdrant_settings is not None:
                 self.output_config.save_to_vectordb = True
-        
+
         return self
 
 
@@ -386,17 +389,17 @@ def get_component_configuration() -> ComponentConfig:
     import json
     import os
     from pathlib import Path
-    
+
     # Get config path from environment or use default
     data_dir = os.getenv('KBC_DATADIR', '')
     config_path = Path(data_dir) / 'config.json'
-    
+
     # Read configuration
     with open(config_path) as config_file:
         config_data = json.load(config_file)
-    
+
     parameters = config_data.get('parameters', {})
-    
+
     try:
         # Parse configuration
         return ComponentConfig(**parameters)
