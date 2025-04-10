@@ -96,8 +96,8 @@
       "properties": {
         "collection_name": {
           "type": "string",
-          "title": "Collection Name",
-          "default": "keboola_embeddings",
+          "title": "Index Name",
+          "default": "",
           "propertyOrder": 10
         },
         "metadata_columns": {

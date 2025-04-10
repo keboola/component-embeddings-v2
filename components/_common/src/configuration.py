@@ -76,8 +76,8 @@ class PineconeSettings(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     api_key: str = Field(validation_alias="#api_key")
-    environment: str
-    index_name: str
+    environment: Optional[str] = None
+    index_name: Optional[str] = None
 
 
 class QdrantSettings(BaseModel):
@@ -388,6 +388,7 @@ class ComponentConfig(BaseModel):
                     qdrant_settings=self.qdrant_settings
                 )
             elif self.pinecone_settings is not None:
+                self.pinecone_settings.index_name = self.destination.collection_name
                 self.vector_db = VectorDBConfig(
                     db_type=VectorStoreType.PINECONE,
                     pinecone_settings=self.pinecone_settings
