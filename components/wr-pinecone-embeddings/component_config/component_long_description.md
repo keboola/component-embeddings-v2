@@ -1,0 +1,1 @@
+This component enables storing vector embeddings in Pinecone, a vector database optimized for similarity search. It supports batch operations, metadata storage, and integrates with various embedding providers. Use this component to store and manage embeddings for semantic search, clustering, recommendation systems, and other AI applications.
