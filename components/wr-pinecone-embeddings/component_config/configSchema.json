@@ -298,24 +298,13 @@
                     "type": "object",
                     "title": "Pinecone Settings",
                     "required": [
-                        "#api_key",
-                        "environment",
-                        "index_name"
+                        "#api_key"
                     ],
                     "properties": {
                         "#api_key": {
                             "type": "string",
                             "title": "API Key",
                             "format": "password"
-                        },
-                        "environment": {
-                            "type": "string",
-                            "title": "Environment",
-                            "description": "Pinecone environment name"
-                        },
-                        "index_name": {
-                            "type": "string",
-                            "title": "Index Name"
                         }
                     }
                 },
