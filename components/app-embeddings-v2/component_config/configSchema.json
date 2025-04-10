@@ -282,7 +282,7 @@
                 }
             }
         },
-        "test_connection": {
+        "test_embedding_service_connection": {
             "type": "button",
             "format": "sync-action",
             "propertyOrder": 300,
@@ -293,6 +293,6 @@
                     "cache": false
                 }
             }
-        }
+        },
     }
 }

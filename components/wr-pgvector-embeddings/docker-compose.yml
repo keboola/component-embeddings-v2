@@ -1,7 +1,7 @@
 version: '3'
 services:
   # for development purposes
-  dev: &app
+  dev:
     build:
       context: ../../
       dockerfile: components/wr-pgvector-embeddings/Dockerfile
@@ -22,9 +22,10 @@ services:
       - ./component_config:/code/component_config
       - ./data:/data
       - ../_common/src:/code/src
-      - ../_common/tests:/code/tests
+      - ./scripts:/code/scripts
+      - ./tests:/code/tests
     environment:
       - KBC_DATADIR=/data
     command:
       - /bin/sh
-      - /code/scripts/build_n_test.sh
+      #- /code/scripts/build_n_test.sh

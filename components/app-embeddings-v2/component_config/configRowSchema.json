@@ -47,27 +47,7 @@
             "description": "Choose a column to use as unique identifier for upserts.",
             "propertyOrder": 2
         },
-        "output_config": {
-            "type": "object",
-            "title": "Output Configuration",
-            "propertyOrder": 300,
-            "properties": {
-                "save_to_storage": {
-                    "type": "boolean",
-                    "title": "Save to Storage",
-                    "format": "checkbox",
-                    "description": "Save Embeddings to Storage also",
-                    "default": false
-                },
-                "save_to_vectordb": {
-                    "type": "boolean",
-                    "format": "checkbox",
-                    "title": "Save to Vector Database",
-                    "description": "Store embeddings in a vector database",
-                    "default": true
-                }
-            }
-        },
+
         "destination": {
             "title": "Destination",
             "type": "object",
