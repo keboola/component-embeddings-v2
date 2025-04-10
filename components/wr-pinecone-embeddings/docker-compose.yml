@@ -1,0 +1,31 @@
+version: '3'
+services:
+  # for development purposes
+  dev:
+    build:
+      context: ../../
+      dockerfile: components/wr-pinecone-embeddings/Dockerfile
+    volumes:
+      - ./component_config:/code/component_config
+      - ./data:/data
+      - ../_common/src:/code/src
+    environment:
+      - KBC_DATADIR=/data
+    command: [ "python", "-u", "/code/src/component.py" ]
+
+  test:
+    # Use to run flake8 and unittests checks
+    build:
+      context: ../../
+      dockerfile: components/wr-pinecone-embeddings/Dockerfile
+    volumes:
+      - ./component_config:/code/component_config
+      - ./data:/data
+      - ../_common/src:/code/src
+      - ./scripts:/code/scripts
+      - ./tests:/code/tests
+    environment:
+      - KBC_DATADIR=/data
+    command:
+      - /bin/sh
+      #- /code/scripts/build_n_test.sh

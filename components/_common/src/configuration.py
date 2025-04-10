@@ -349,6 +349,7 @@ class ComponentConfig(BaseModel):
     # Legacy direct DB settings fields for writer components
     pgvector_settings: Optional[PGVectorSettings] = None
     qdrant_settings: Optional[QdrantSettings] = None
+    pinecone_settings: Optional[PineconeSettings] = None
 
     @model_validator(mode='after')
     def backward_compatibility(self) -> 'ComponentConfig':
@@ -386,6 +387,11 @@ class ComponentConfig(BaseModel):
                     db_type=VectorStoreType.QDRANT,
                     qdrant_settings=self.qdrant_settings
                 )
+            elif self.pinecone_settings is not None:
+                self.vector_db = VectorDBConfig(
+                    db_type=VectorStoreType.PINECONE,
+                    pinecone_settings=self.pinecone_settings
+                )
 
         # Get destination.collection_name if it exists
         destination_collection = self.destination.collection_name if self.destination else None
@@ -411,7 +417,10 @@ class ComponentConfig(BaseModel):
         # -- 4. Final settings for writer components --
         # For writer components, we assume they save to vector DB
         if not self.output_config.save_to_vectordb:
-            if self.vector_db is not None or self.pgvector_settings is not None or self.qdrant_settings is not None:
+            if (self.vector_db is not None or
+                    self.pgvector_settings is not None or
+                    self.qdrant_settings is not None or
+                    self.pinecone_settings is not None):
                 self.output_config.save_to_vectordb = True
 
         # Validate that vector_db exists when needed

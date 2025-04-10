@@ -1,6 +1,6 @@
 {
     "type": "object",
-    "title": "Configuration",
+    "title": "Embeddings Configuration",
     "required": [
         "embedding_settings"
     ],
