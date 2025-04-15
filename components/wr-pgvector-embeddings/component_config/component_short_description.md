@@ -1,1 +1,1 @@
-keboola.wr-pgvector-embeddings short description
+Writer for storing text embeddings in PostgreSQL databases with pgvector extension.
