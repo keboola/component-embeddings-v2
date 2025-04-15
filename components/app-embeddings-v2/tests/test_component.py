@@ -3,10 +3,9 @@ Created on 12. 11. 2018
 
 @author: esner
 '''
-import os
 import unittest
-
 import mock
+import os
 from freezegun import freeze_time
 
 from component import Component

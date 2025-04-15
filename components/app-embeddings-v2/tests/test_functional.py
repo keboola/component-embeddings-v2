@@ -1,0 +1,13 @@
+import unittest
+import os
+from datadirtest import DataDirTester
+
+
+class TestComponent(unittest.TestCase):
+
+    def test_functional(self):
+        functional_tests = DataDirTester()
+        functional_tests.run()
+
+if __name__ == "__main__":
+    unittest.main()

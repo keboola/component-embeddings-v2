@@ -1,1 +1,1 @@
-keboola.wr-qdrant-embeddings short description
+Writer for storing text embeddings in Qdrant vector database.

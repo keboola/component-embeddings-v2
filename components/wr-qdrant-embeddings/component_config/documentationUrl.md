@@ -1,1 +1,1 @@
-https://github.com/keboola/component-embeddings-v2/blob/master/README.md
+https://github.com/keboola/component-embeddings-v2/blob/main/README.md
