@@ -163,8 +163,8 @@ jobs:
         - name: Run Tests
           run: |
             cd ${{ inputs.component_dir }}
-            docker compose build tests
-            docker compose run tests
+            docker compose build test
+            docker compose run test
 
   tests-kbc:
     name: Run KBC Tests
