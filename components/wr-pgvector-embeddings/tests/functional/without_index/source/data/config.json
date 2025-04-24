@@ -1,0 +1,55 @@
+{
+    "parameters": {
+        "pgvector_settings": {
+            "host": "{{env.POSTGRES_HOST}}",
+            "port": "{{env.POSTGRES_PORT}}",
+            "database": "{{env.POSTGRES_DB}}",
+            "username": "{{env.POSTGRES_USER}}",
+            "#password": "{{env.POSTGRES_PASSWORD}}"
+        },
+        "embedding_settings": {
+            "provider_type": "openai",
+            "openai_settings": {
+                "model": "{{env.OPENAI_MODEL}}",
+                "#api_key": "{{env.OPENAI_API_KEY}}"
+            }
+        },
+        "text_column": "content",
+        "advanced_options": {
+            "batch_size": 100,
+            "enable_chunking": false
+        },
+        "destination": {
+            "collection_name": "keboola_embeddings",
+            "load_type": "incremental_load",
+            "primary_key": "id",
+            "metadata_columns": [
+                "metadata"
+            ]
+        }
+    },
+    "storage": {
+        "input": {
+            "tables": [
+                {
+                    "source": "test_data",
+                    "destination": "test_data.csv",
+                    "columns": ["id", "content", "metadata"],
+                    "column_types": [],
+                    "where_values": [],
+                    "where_operator": "eq",
+                    "overwrite": false,
+                    "use_view": false,
+                    "keep_internal_timestamp_column": true
+                }
+            ],
+            "files": []
+        }
+    },
+    "shared_code_row_ids": [],
+    "image_parameters": {},
+    "authorization": {
+        "context": "9382-writer"
+    },
+    "action": "run"
+}

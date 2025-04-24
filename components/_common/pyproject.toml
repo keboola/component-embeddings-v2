@@ -4,23 +4,31 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
+    "boto3>=1.37.34",
+    "cohere>=5.14.2",
+    "datadirtest",
     "freezegun>=1.5.1",
     "greenlet>=3.1.1",
     "keboola-component>=1.6.10",
-    "langchain-aws==0.2.18",
-    "langchain-cohere==0.4.3",
-    "langchain-community==0.3.21",
-    "langchain-core==0.3.51",
+    "langchain>=0.3.23",
+    "langchain-aws>=0.2.18",
+    "langchain-cohere>=0.4.3",
+    "langchain-community>=0.3.21",
+    "langchain-core>=0.3.51",
     "langchain-google-vertexai>=2.0.13",
     "langchain-huggingface>=0.1.2",
     "langchain-milvus>=0.1.8",
-    "langchain-openai==0.3.12",
-    "langchain-pinecone==0.2.4",
-    "langchain-postgres==0.0.14",
+    "langchain-openai>=0.3.12",
+    "langchain-pinecone>=0.2.5",
+    "langchain-postgres>=0.0.14",
     "langchain-qdrant>=0.2.0",
-    "langchain-redis==0.2.0",
+    "langchain-redis>=0.2.0",
     "mock>=5.1.0",
     "opensearch-py>=2.8.0",
     "psycopg-binary>=3.2.4",
-    "pydantic==2.11.2"
+    "pydantic>=2.11.2",
+    "tenacity>=9.1.2",
 ]
+
+[tool.uv.sources]
+datadirtest = { url = "https://bitbucket.org/kds_consulting_team/datadirtest/get/1.8.7.zip" }

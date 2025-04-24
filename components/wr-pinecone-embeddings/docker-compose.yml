@@ -1,4 +1,15 @@
-version: '3'
+# Define common environment variables at the top level
+x-pinecone-env: &pinecone-env
+  PORT: 5081
+  PINECONE_HOST: http://10.5.0.10
+
+networks:
+  keboola_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+
 services:
   # for development purposes
   dev:
@@ -9,15 +20,40 @@ services:
       - ./component_config:/code/component_config
       - ./data:/data
       - ../_common/src:/code/src
-    environment:
-      - KBC_DATADIR=/data
     command: [ "python", "-u", "/code/src/component.py" ]
+
+  # Pinecone Local for testing
+  pinecone:
+    build:
+      context: ./tests/mocks/pinecone
+    platform: linux/amd64
+    ports:
+      - "5081-6000:5081-6000"
+    environment:
+      <<: *pinecone-env
+    networks:
+      keboola_net:
+        ipv4_address: 10.5.0.10
+
+  # Mock OpenAI API service for testing embeddings
+  openai-mock:
+    build:
+      context: ./tests/mocks/openai
+    networks:
+      keboola_net:
+    ports:
+      - "8002:8000"
 
   test:
     # Use to run flake8 and unittests checks
     build:
       context: ../../
       dockerfile: components/wr-pinecone-embeddings/Dockerfile
+    depends_on:
+      pinecone:
+        condition: service_started
+      openai-mock:
+        condition: service_healthy
     volumes:
       - ./component_config:/code/component_config
       - ./data:/data
@@ -25,7 +61,18 @@ services:
       - ./scripts:/code/scripts
       - ./tests:/code/tests
     environment:
-      - KBC_DATADIR=/data
+      <<: *pinecone-env
+      OPENAI_API_KEY: sk-fake-key-for-testing
+      OPENAI_MODEL: text-embedding-3-small
+      OPENAI_API_BASE: http://openai-mock:8000
+      PINECONE_CONTROLLER_HOST: http://10.5.0.10:5081
+      PINECONE_INDEX_NAME: "test-index"
     command:
       - /bin/sh
-      #- /code/scripts/build_n_test.sh
+      - -c
+      - |
+        set -e
+        cd /code/
+        python -m unittest discover
+    networks:
+      - keboola_net

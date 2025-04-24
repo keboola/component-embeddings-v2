@@ -65,6 +65,8 @@ class VectorStoreManager:
                         connection=connection_string,
                         embeddings=self.embedding_model,
                         collection_name=settings.collection_name,
+                        table_name="my_custom_embeddings_table",
+                        collection_table_name="my_custom_collections_table",
                         async_mode=True
                     )
 

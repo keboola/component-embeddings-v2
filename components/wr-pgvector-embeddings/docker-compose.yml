@@ -1,4 +1,11 @@
-version: '3'
+# Define common environment variables at the top level
+x-pg-env: &pg-env
+  POSTGRES_USER: myuser
+  POSTGRES_PASSWORD: mypassword
+  POSTGRES_DB: mydatabase
+  POSTGRES_HOST: pgvector
+  POSTGRES_PORT: 5432
+
 services:
   # for development purposes
   dev:
@@ -9,15 +16,44 @@ services:
       - ./component_config:/code/component_config
       - ./data:/data
       - ../_common/src:/code/src
-    environment:
-      - KBC_DATADIR=/data
     command: [ "python", "-u", "/code/src/component.py" ]
+
+  # PgVector database for testing
+  pgvector:
+    build:
+      context: ./tests/mocks/postgres
+    environment:
+      <<: *pg-env
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Mock OpenAI API service for testing embeddings
+  openai-mock:
+    build:
+      context: ./tests/mocks/openai
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://openai-mock:8000/health" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   test:
     # Use to run flake8 and unittests checks
     build:
       context: ../../
       dockerfile: components/wr-pgvector-embeddings/Dockerfile
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      openai-mock:
+        condition: service_healthy
     volumes:
       - ./component_config:/code/component_config
       - ./data:/data
@@ -25,7 +61,15 @@ services:
       - ./scripts:/code/scripts
       - ./tests:/code/tests
     environment:
-      - KBC_DATADIR=/data
+      <<: *pg-env
+      OPENAI_API_KEY: sk-fake-key-for-testing
+      OPENAI_MODEL: text-embedding-3-small
+      OPENAI_API_BASE: http://openai-mock:8000
     command:
       - /bin/sh
-      #- /code/scripts/build_n_test.sh
+      - -c
+      - |
+        set -e
+        pip install psycopg2-binary
+        cd /code/
+        python -m unittest discover

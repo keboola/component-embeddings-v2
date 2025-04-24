@@ -11,3 +11,4 @@ __pycache__/
 # kbc datafolder
 /data/*
 /components/_common/data/
+/components/_common/tests/

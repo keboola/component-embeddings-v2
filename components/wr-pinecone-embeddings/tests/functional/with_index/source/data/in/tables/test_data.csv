@@ -1,0 +1,6 @@
+id,content,metadata
+1,"The quick brown fox jumps over the lazy dog.","{\"source\": \"test\", \"tag\": \"animal\"}"
+2,"Python is a popular programming language.","{\"source\": \"test\", \"tag\": \"technology\"}"
+3,"Machine learning is transforming industries.","{\"source\": \"test\", \"tag\": \"technology\"}"
+4,"Vector databases store and search high-dimensional vectors.","{\"source\": \"test\", \"tag\": \"database\"}"
+5,"Natural language processing helps computers understand text.","{\"source\": \"test\", \"tag\": \"technology\"}" 
