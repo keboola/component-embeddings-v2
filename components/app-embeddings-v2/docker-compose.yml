@@ -28,4 +28,4 @@ services:
       - KBC_DATADIR=/data
     command:
       - /bin/sh
-      - /code/scripts/build_n_test.sh
+      #- /code/scripts/build_n_test.sh

@@ -27,6 +27,9 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY components/_common/src /code/src/
 COPY components/_common/flake8.cfg /code/flake8.cfg
 COPY components/_common/deploy.sh /code/deploy.sh
+COPY components/wr-pinecone-embeddings/tests /code/tests/
+COPY components/wr-pinecone-embeddings/scripts /code/scripts/
+
 
 WORKDIR /code/
 
