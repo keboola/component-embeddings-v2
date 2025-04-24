@@ -187,7 +187,7 @@ jobs:
 
   deploy:
     name: Deploy to KBC and update Developer Portal
-    needs: [ check_version, build]
+    needs: [ check_version, build, tests]
     if: needs.check_version.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
     steps:
