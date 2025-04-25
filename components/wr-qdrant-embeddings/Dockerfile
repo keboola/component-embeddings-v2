@@ -14,7 +14,7 @@ COPY components/_common/pyproject.toml components/_common/uv.lock /code/
 
 # Install dependencies
 WORKDIR /code
-RUN uv pip install -r pyproject.toml --system --no-cache
+RUN uv sync
 
 # Runtime stage
 FROM python:3.12-slim-bullseye AS runtime
