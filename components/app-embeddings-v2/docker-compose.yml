@@ -11,7 +11,7 @@ services:
       - ../_common/src:/code/src
     environment:
       - KBC_DATADIR=/data
-    command: [ "python", "-u", "/code/src/component.py" ]
+    command: [ "/code/.venv/bin/python", "-u", "/code/src/component.py" ]
 
   test:
     # Use to run flake8 and unittests checks
@@ -28,4 +28,8 @@ services:
       - KBC_DATADIR=/data
     command:
       - /bin/sh
-      #- /code/scripts/build_n_test.sh
+      - -c
+      - |
+        set -e
+        cd /code/
+        /code/.venv/bin/python -m unittest discover
