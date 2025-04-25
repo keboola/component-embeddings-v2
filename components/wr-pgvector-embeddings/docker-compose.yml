@@ -16,7 +16,7 @@ services:
       - ./component_config:/code/component_config
       - ./data:/data
       - ../_common/src:/code/src
-    command: [ "python", "-u", "/code/src/component.py" ]
+    command: [ "/code/.venv/bin/python", "-u", "/code/src/component.py" ]
 
   # PgVector database for testing
   pgvector:
@@ -70,6 +70,5 @@ services:
       - -c
       - |
         set -e
-        pip install psycopg2-binary
         cd /code/
-        python -m unittest discover
+        /code/.venv/bin/python -m unittest discover

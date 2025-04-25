@@ -20,7 +20,7 @@ services:
       - ./component_config:/code/component_config
       - ./data:/data
       - ../_common/src:/code/src
-    command: [ "python", "-u", "/code/src/component.py" ]
+    command: [ "/code/.venv/bin/python", "-u", "/code/src/component.py" ]
 
   # Pinecone Local for testing
   pinecone:
@@ -73,6 +73,7 @@ services:
       - |
         set -e
         cd /code/
-        python -m unittest discover
+        # Use python from .venv created by uv
+        /code/.venv/bin/python -m unittest discover
     networks:
       - keboola_net

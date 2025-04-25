@@ -60,4 +60,4 @@ services:
       - |
         set -e
         cd /code/
-        python -m unittest discover
+        /code/.venv/bin/python -m unittest discover
