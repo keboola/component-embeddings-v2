@@ -10,7 +10,7 @@ COPY components/_common/flake8.cfg /code/flake8.cfg
 COPY components/_common/deploy.sh /code/deploy.sh
 
 # Copy component specific files
-COPY components/app-embeddings-v2/tests /code/tests/
+#COPY components/app-embeddings-v2/tests /code/tests/
 COPY components/app-embeddings-v2/scripts /code/scripts/
 
 WORKDIR /code/

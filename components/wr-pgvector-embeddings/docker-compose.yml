@@ -71,4 +71,5 @@ services:
       - |
         set -e
         cd /code/
+        uv add psycopg2
         /code/.venv/bin/python -m unittest discover
