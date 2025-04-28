@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
-RUN pip install --no-cache-dir fastapi uvicorn numpy
+RUN uv pip install --no-cache-dir fastapi uvicorn numpy
 
 # Copy our mock service implementation
 COPY server.py .
