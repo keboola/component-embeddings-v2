@@ -29,7 +29,7 @@ services:
   openai-mock:
     build:
       context: ../../
-      dockerfile: components/_common/tests/mocks/openai
+      dockerfile: components/_common/tests/mocks/openai/Dockerfile
     ports:
       - "8001:8000"
 
