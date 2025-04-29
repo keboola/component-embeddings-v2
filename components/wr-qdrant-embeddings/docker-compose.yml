@@ -28,7 +28,8 @@ services:
   # Mock OpenAI API service for testing embeddings
   openai-mock:
     build:
-      context: ../../_common/tests/mocks/openai
+      context: ../../
+      dockerfile: components/_common/tests/mocks/openai-mock/Dockerfile
     ports:
       - "8001:8000"
 
