@@ -27,6 +27,8 @@ services:
 
   # Mock OpenAI API service for testing embeddings
   openai-mock:
+    command:
+      - ls -la
     build:
       context: ../_common/tests/mocks/openai-mock
     ports:
