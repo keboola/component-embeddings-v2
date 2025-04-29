@@ -38,11 +38,6 @@ services:
       context: ../../components/_common/tests/mocks/openai
     ports:
       - "8000:8000"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://openai-mock:8000/health" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   test:
     # Use to run flake8 and unittests checks
