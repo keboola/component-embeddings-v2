@@ -1,1 +1,1 @@
-keboola.app-embeddings-v2 short description
+User interface for managing embedding operations and configuring vector database connections.

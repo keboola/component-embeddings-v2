@@ -1,1 +1,1 @@
-Store and retrieve vector embeddings in Pinecone vector database
+Writer for storing and retrieving vector embeddings in Pinecone vector database.

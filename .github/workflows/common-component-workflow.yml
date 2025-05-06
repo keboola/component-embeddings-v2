@@ -128,8 +128,9 @@ jobs:
           docker load --input /tmp/${{ inputs.kbc_developerportal_app }}.tar
           docker image ls -a
           docker run ${{ inputs.kbc_developerportal_app }}:latest flake8 . --config=flake8.cfg
-          echo "Running unit-tests..."
-          docker run ${{ inputs.kbc_developerportal_app }}:latest python -m unittest discover
+
+        #echo "Running unit-tests..."
+        #docker run ${{ inputs.kbc_developerportal_app }}:latest python -m unittest discover
 
       - name: Load Image
         run: |
@@ -149,6 +150,21 @@ jobs:
           tag: ${{ needs.check_version.outputs.image_tag }}
           push_latest: ${{ needs.check_version.outputs.should_deploy }}
           source_image: ${{ inputs.kbc_developerportal_app }}
+
+  tests:
+      name: Run Tests
+      runs-on: ubuntu-latest
+      needs:
+        - build
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Run Tests
+          run: |
+            cd ${{ inputs.component_dir }}
+            docker compose build test
+            docker compose run test
 
   tests-kbc:
     name: Run KBC Tests
@@ -171,7 +187,7 @@ jobs:
 
   deploy:
     name: Deploy to KBC and update Developer Portal
-    needs: [ check_version, build]
+    needs: [ check_version, build, tests]
     if: needs.check_version.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
     steps:

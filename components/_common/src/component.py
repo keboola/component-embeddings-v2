@@ -209,7 +209,7 @@ class Component(ComponentBase):
 
     @staticmethod
     def _test_vector_store_connection(vector_store_manager: VectorStoreManager) -> None:
-        """Test connection to vector database."""
+        """Test connection to a vector database."""
         try:
             logging.info("Testing connection to vector database...")
             asyncio.run(vector_store_manager.vector_store.asearch("test", "similarity"))
@@ -219,7 +219,7 @@ class Component(ComponentBase):
 
     @sync_action("testVectorStoreConnection")
     def test_vector_store_connection(self) -> ValidationResult:
-        """Sync action to test connection to vector database."""
+        """Sync action to test connection to a vector database."""
         try:
             # Load config
             self.config = ComponentConfig.model_validate(self.configuration.parameters)
@@ -228,7 +228,7 @@ class Component(ComponentBase):
             if not self.config.vector_db:
                 raise UserException("Vector database configuration is missing")
 
-            # Try to initialize vector store
+            # Try to initialize a vector store
             vector_store = VectorStoreManager(self.config, None)
 
             vector_store._initialize_vector_store()
