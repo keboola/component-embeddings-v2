@@ -77,10 +77,10 @@ jobs:
         run: |
           if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
              [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
-            # Pro semantický tag s novou verzí použijeme verzi z VERSION
+            # For the semantic tag with the new version, we will use the version from VERSION
             echo "image_tag=${{ steps.check.outputs.version }}" >> $GITHUB_OUTPUT
           else
-            # Pro ostatní případy použijeme název větve za posledním lomítkem
+            # For other cases, we will use the branch name after the last slash
             branch_name="${GITHUB_REF#refs/heads/}"
             branch_name="${branch_name#refs/tags/}"
             image_tag="${branch_name##*/}"
