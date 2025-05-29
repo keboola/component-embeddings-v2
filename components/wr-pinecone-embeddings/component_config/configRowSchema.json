@@ -141,7 +141,7 @@
           "title": "Primary Key Column",
           "watch": {
             "columns": "_metadata_.table.columns"
-          }
+          },
           "enumSource": "columns",
           "description": "Choose a column to use as unique identifier for upserts.",
           "propertyOrder": 30,
