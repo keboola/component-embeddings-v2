@@ -9,7 +9,7 @@ dependencies = [
     "datadirtest",
     "freezegun==1.5.1",
     "greenlet==3.1.1",
-    "keboola-component==1.6.10",
+    "keboola-component>=1.11.0",
     "langchain==0.3.23",
     "langchain-aws==0.2.18",
     "langchain-cohere==0.4.3",
